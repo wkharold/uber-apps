@@ -148,7 +148,7 @@ func taskadd(ctx context.Context, w http.ResponseWriter, req *http.Request) {
 	body, err := ioutil.ReadAll(req.Body)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
-		w.Write(mkError("ServerError", "reason", "Cannot read HTTP request body"))
+		w.Write(mkError("ServerError", "reason", fmt.Sprintf("Cannot read HTTP request body [%+v]", err)))
 		return
 	}
 
@@ -156,7 +156,7 @@ func taskadd(ctx context.Context, w http.ResponseWriter, req *http.Request) {
 	sm := re.FindStringSubmatch(string(body))
 	if sm == nil {
 		w.WriteHeader(http.StatusBadRequest)
-		w.Write(mkError("ClientError", "reason", "Unrecognized add task body"))
+		w.Write(mkError("ClientError", "reason", fmt.Sprintf("Expecting text={task}, got %s", string(body))))
 		return
 	}
 
@@ -172,7 +172,7 @@ func taskcomplete(ctx context.Context, w http.ResponseWriter, req *http.Request)
 	body, err := ioutil.ReadAll(req.Body)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
-		w.Write(mkError("ServerError", "reason", "Cannot read HTTP request body"))
+		w.Write(mkError("ServerError", "reason", fmt.Sprintf("Cannot read HTTP request body [%+v]", err)))
 		return
 	}
 
@@ -180,7 +180,7 @@ func taskcomplete(ctx context.Context, w http.ResponseWriter, req *http.Request)
 	sm := re.FindStringSubmatch(string(body))
 	if sm == nil {
 		w.WriteHeader(http.StatusBadRequest)
-		w.Write(mkError("ClientError", "reason", "Unrecognized complete text body"))
+		w.Write(mkError("ClientError", "reason", fmt.Sprintf("Expecting id={taskid}, got %s", string(body))))
 		return
 	}
 
@@ -188,7 +188,7 @@ func taskcomplete(ctx context.Context, w http.ResponseWriter, req *http.Request)
 	taskid, err := strconv.Atoi(sm[1])
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
-		w.Write(mkError("ServerError", "reason", "Cannot read HTTP request body"))
+		w.Write(mkError("ServerError", "reason", fmt.Sprintf("Unable to convert taskid [%+v]", err)))
 		return
 	}
 
@@ -234,7 +234,7 @@ func tasklist(ctx context.Context, w http.ResponseWriter, req *http.Request) {
 	bs, err := json.Marshal(resp)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
-		w.Write(mkError("ServerError", "reason", "Cannot read HTTP request body"))
+		w.Write(mkError("ServerError", "reason", fmt.Sprintf("Cannot marshal response [%+v]", err)))
 		return
 	}
 
@@ -269,7 +269,7 @@ func tasksearch(ctx context.Context, w http.ResponseWriter, req *http.Request) {
 	bs, err := json.Marshal(resp)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
-		w.Write(mkError("ServerError", "reason", "Cannot read HTTP request body"))
+		w.Write(mkError("ServerError", "reason", fmt.Sprintf("Cannont marshal response [%+v]", err)))
 	}
 
 	w.WriteHeader(http.StatusOK)
