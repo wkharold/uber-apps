@@ -86,7 +86,13 @@ func (ud *udoc) appendItem(taskid, value string) {
 	ud.Uber.Data[1].Data = append(ud.Uber.Data[1].Data, task)
 }
 
+const (
+	NONE  = 0
+	DEBUG = 1
+)
+
 var (
+	logging = NONE
 	taskctx = context.Background()
 )
 
@@ -106,7 +112,35 @@ func router() *mux.Router {
 	r.Handle("/tasks", http.Handler(ContextAdapter{ctx: taskctx, handler: ContextHandlerFunc(taskadd)})).Methods("POST")
 	r.Handle("/tasks/complete", http.Handler(ContextAdapter{ctx: taskctx, handler: ContextHandlerFunc(taskcomplete)})).Methods("POST")
 	r.Handle("/tasks/search", http.Handler(ContextAdapter{ctx: taskctx, handler: ContextHandlerFunc(tasksearch)})).Methods("GET")
+	r.Handle("/_loglevel", http.Handler(ContextAdapter{ctx: taskctx, handler: ContextHandlerFunc(loglevel)})).Methods("POST")
 	return r
+}
+
+// logglevel sets the desired level of logging
+func loglevel(ctx context.Context, w http.ResponseWriter, req *http.Request) {
+	body, err := ioutil.ReadAll(req.Body)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write(mkError("ServerError", "reason", fmt.Sprintf("Cannot read HTTP request body [%+v]", err)))
+		return
+	}
+
+	re := regexp.MustCompile("level=([[:digit:]])")
+	sm := re.FindStringSubmatch(string(body))
+	if sm == nil {
+		w.WriteHeader(http.StatusBadRequest)
+		w.Write(mkError("ClientError", "reason", fmt.Sprintf("Expecting level={digit}, got %s", string(body))))
+		return
+	}
+
+	logging, err = strconv.Atoi(sm[1])
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write(mkError("ServerError", "reason", fmt.Sprintf("Unable to convert log level [%+v]", err)))
+		return
+	}
+
+	w.WriteHeader(http.StatusOK)
 }
 
 // taskadd adds a task to the list.
