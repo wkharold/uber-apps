@@ -73,13 +73,17 @@ type udoc struct {
 	Uber ubody `json:"uber"`
 }
 
+type leveledLogger struct {
+	logger *log.Logger
+	level  int
+}
+
 var (
-	logging = 0
-	pitctx  = context.Background()
+	pitctx = context.Background()
 )
 
 func init() {
-	pitctx = context.WithValue(pitctx, "logger", log.New(os.Stdout, "pitd: ", log.LstdFlags))
+	pitctx = context.WithValue(pitctx, "logger", &leveledLogger{logger: log.New(os.Stdout, "pitd: ", log.LstdFlags), level: 0})
 	http.Handle("/", handlers.CompressHandler(handlers.LoggingHandler(os.Stdout, router())))
 }
 
@@ -93,7 +97,7 @@ func router() *mux.Router {
 	return r
 }
 
-// logglevel sets the desired level of logging
+// loglevel sets the desired level of logging
 func loglevel(ctx context.Context, w http.ResponseWriter, req *http.Request) {
 	body, err := ioutil.ReadAll(req.Body)
 	if err != nil {
@@ -110,11 +114,16 @@ func loglevel(ctx context.Context, w http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	logging, err = strconv.Atoi(sm[1])
+	level, err := strconv.Atoi(sm[1])
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		w.Write(mkError("ServerError", "reason", fmt.Sprintf("Unable to convert log level [%+v]", err)))
 		return
+	}
+
+	ll := ctx.Value("logger").(*leveledLogger)
+	if ll != nil {
+		ll.level = level
 	}
 
 	w.WriteHeader(http.StatusOK)
