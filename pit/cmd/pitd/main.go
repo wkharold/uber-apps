@@ -9,11 +9,16 @@ import (
 	"net/http"
 	"os"
 	"regexp"
-	"strconv"
+	"strings"
 
 	"github.com/gorilla/handlers"
 	"github.com/gorilla/mux"
 	"golang.org/x/net/context"
+)
+
+const (
+	DEBUG = 0
+	INFO  = 1
 )
 
 // ContextHandler defines the ServeHTTPWithContext method. Types that implement ContextHandler
@@ -51,7 +56,7 @@ type udata struct {
 	Rel        []string `json:"rel,omitempty"`
 	Label      string   `json:"label,omitempty"`
 	URL        string   `json:"url,omitempty"`
-	Template   bool     `json:"template,omitempty"`
+	Templated  bool     `json:"template,omitempty"`
 	Action     string   `json:"action,omitempty"`
 	Transclude bool     `json:"transclude,omitempty"`
 	Model      string   `json:"model,omitempty"`
@@ -73,6 +78,8 @@ type udoc struct {
 	Uber ubody `json:"uber"`
 }
 
+// leveledLogger combines a std log.Logger with a level at which to log. Possible levels
+// are DEBUG, things that matter to developers, and INFO, things that matter to users.
 type leveledLogger struct {
 	logger *log.Logger
 	level  int
@@ -83,7 +90,7 @@ var (
 )
 
 func init() {
-	pitctx = context.WithValue(pitctx, "logger", &leveledLogger{logger: log.New(os.Stdout, "pitd: ", log.LstdFlags), level: 0})
+	pitctx = context.WithValue(pitctx, "logger", &leveledLogger{logger: log.New(os.Stdout, "pitd: ", log.LstdFlags), level: INFO})
 	http.Handle("/", handlers.CompressHandler(handlers.LoggingHandler(os.Stdout, router())))
 }
 
@@ -106,24 +113,29 @@ func loglevel(ctx context.Context, w http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	re := regexp.MustCompile("level=([[:digit:]])")
+	re := regexp.MustCompile("level=([[:alpha:]]+)")
 	sm := re.FindStringSubmatch(string(body))
-	if sm == nil {
+	if sm == nil || len(sm) < 2 {
 		w.WriteHeader(http.StatusBadRequest)
 		w.Write(mkError("ClientError", "reason", fmt.Sprintf("Expecting level={digit}, got %s", string(body))))
 		return
 	}
 
-	level, err := strconv.Atoi(sm[1])
-	if err != nil {
+	switch strings.ToLower(sm[1]) {
+	case "debug":
+		ll := ctx.Value("logger").(*leveledLogger)
+		if ll != nil {
+			ll.level = DEBUG
+		}
+	case "info":
+		ll := ctx.Value("logger").(*leveledLogger)
+		if ll != nil {
+			ll.level = INFO
+		}
+	default:
 		w.WriteHeader(http.StatusInternalServerError)
 		w.Write(mkError("ServerError", "reason", fmt.Sprintf("Unable to convert log level [%+v]", err)))
 		return
-	}
-
-	ll := ctx.Value("logger").(*leveledLogger)
-	if ll != nil {
-		ll.level = level
 	}
 
 	w.WriteHeader(http.StatusOK)
