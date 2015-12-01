@@ -30,7 +30,7 @@ var (
 							"name": "links",
 							"rel": [ "search" ], 
 							"url": "/projects/search{?name}", 
-							"templated": "true"
+							"templated": true
 						},
 						{ 
 							"id": "new", 
@@ -38,7 +38,7 @@ var (
 							"rel": [ "add" ], 
 							"url": "/projects/", 
 							"action": "append",
-							"model": "n={name}&d={description}"
+							"model": "n={name}\u0026d={description}"
 						} 
 					] 
 				},

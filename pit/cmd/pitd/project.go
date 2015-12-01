@@ -1,6 +1,7 @@
 package main
 
 import (
+	"encoding/json"
 	"fmt"
 	"log"
 	"net/http"
@@ -39,7 +40,7 @@ func projectlist(ctx context.Context, w http.ResponseWriter, req *http.Request) 
 		w.Write(mkError("ServerError", "reason", reason))
 	}
 
-	_, err := pl.MarshalUber()
+	ud, err := pl.MarshalUber()
 	if err != nil {
 		rc, reason := http.StatusInternalServerError, fmt.Sprintf("Unable to marshal as UBER: %+v", err)
 
@@ -50,9 +51,15 @@ func projectlist(ctx context.Context, w http.ResponseWriter, req *http.Request) 
 		w.WriteHeader(rc)
 		w.Write(mkError("ServerError", "reason", reason))
 	}
+
+	if logger.level == DEBUG {
+		logger.logger.Printf("projectlist: exit with 200 [%s]", string(ud))
+	}
+
+	w.Write(ud)
 }
 
-func (ps projects) MarshalUber() (*udoc, error) {
+func (ps projects) MarshalUber() ([]byte, error) {
 	links := udata{
 		ID: "links",
 		Data: []udata{
@@ -83,7 +90,7 @@ func (ps projects) MarshalUber() (*udoc, error) {
 				ID:     "new",
 				Name:   "links",
 				Rel:    []string{"add"},
-				URL:    "/projects",
+				URL:    "/projects/",
 				Action: "append",
 				Model:  "n={name}&d={description}",
 				Data:   []udata{},
@@ -93,5 +100,5 @@ func (ps projects) MarshalUber() (*udoc, error) {
 
 	projlist := udata{ID: "projects", Data: []udata{}}
 
-	return &udoc{ubody{Version: "1.0", Data: []udata{links, projlist}, Error: []udata{}}}, nil
+	return json.Marshal(udoc{ubody{Version: "1.0", Data: []udata{links, projlist}, Error: []udata{}}})
 }

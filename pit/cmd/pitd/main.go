@@ -56,7 +56,7 @@ type udata struct {
 	Rel        []string `json:"rel,omitempty"`
 	Label      string   `json:"label,omitempty"`
 	URL        string   `json:"url,omitempty"`
-	Templated  bool     `json:"template,omitempty"`
+	Templated  bool     `json:"templated,omitempty"`
 	Action     string   `json:"action,omitempty"`
 	Transclude bool     `json:"transclude,omitempty"`
 	Model      string   `json:"model,omitempty"`
