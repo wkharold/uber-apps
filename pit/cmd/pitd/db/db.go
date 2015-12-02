@@ -58,6 +58,53 @@ func (Projects) FindAll(ctx context.Context) ([]Project, error) {
 
 		result = append(result, project)
 	}
+
+	return result, nil
+}
+
+// FindByOwner retrieves a list of all projects owned by the specified owner
+func (Projects) FindByOwner(ctx context.Context, owner string) ([]Project, error) {
+	var ownerid int
+
+	err := db.QueryRow("SELECT ID from members where Email = ?;", owner).Scan(&ownerid)
+	if err != nil {
+		return []Project{}, err
+	}
+
+	rows, err := db.Query("SELECT * from projects where Owner = ?;", ownerid)
+	if err != nil {
+		return []Projects{}, err
+	}
+
+	result := []Project{}
+
+	for rows.Next() {
+		project, err := projectFromRow(rows)
+		if err != nil {
+			return []Project{}, err
+		}
+
+		result = append(result, project)
+	}
+
+	return result, nil
+}
+
+// FindByID retrieves the project with the given ID
+func (Projects) FindByID(ctx context.Context, id int) (Project, error) {
+	result := Project{}
+
+	err := db.QueryRow("SELECT * FROM projects WHERE ID = ?;", id).Scan(&result.name, &result.description, &ownerid)
+	if err != nil {
+		return Project{}, nil
+	}
+
+	err = db.QueryRow("SELECT Email FROM members WHERE ID = ?;", ownerid).Scan(&result.owner)
+	if err != nil {
+		return Project{}, nil
+	}
+
+	return Project{}, nil
 }
 
 func projectFromRow(rows *sql.Rows) (Project, error) {
