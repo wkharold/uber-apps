@@ -10,11 +10,31 @@ import (
 	_ "github.com/cznic/ql"
 )
 
+const (
+	Closed   = "CLOSED"
+	Open     = "OPEN"
+	Returned = "RETURNED"
+)
+
 var (
 	db  *sql.DB
 	IDs chan<- int
 )
 
+// Issue is an issue reported by a member of a project team.
+type Issue struct {
+	id          int
+	description string
+	priority    int
+	status      string
+	project     int
+	reporter    int
+}
+
+// Issues is the collection of all of the reported issues known to the PIT system.
+type Issues struct{}
+
+// Project is a project managed by the PIT system and owned by a specific member of the project team.
 type Project struct {
 	id          int
 	name        string
@@ -22,6 +42,7 @@ type Project struct {
 	owner       string
 }
 
+// Projects is the collection of all the projects managed by the PIT system.
 type Projects struct{}
 
 func init() {
@@ -115,7 +136,7 @@ func mkTables(db *sql.DB) error {
 		return err
 	}
 
-	if _, err = tx.Exec("CREATE TABLE issues (ID int, Description string, Priority int, Reporter int);"); err != nil {
+	if _, err = tx.Exec("CREATE TABLE issues (ID int, Description string, Priority int, Status string, Project int,  Reporter int);"); err != nil {
 		tx.Rollback()
 		return err
 	}
