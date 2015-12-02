@@ -43,7 +43,7 @@ func init() {
 
 // FindAll retrieves a list of all the projects in the repository.
 func (Projects) FindAll(ctx context.Context) ([]Project, error) {
-	rows, err := db.Query("SELECT * from projects;")
+	rows, err := db.Query("SELECT projects.ID, projects.Name, projects.Description, members.Email FROM projects, members WHERE projects.Owner = members.ID")
 	if err != nil {
 		return []Project{}, err
 	}
@@ -51,8 +51,9 @@ func (Projects) FindAll(ctx context.Context) ([]Project, error) {
 	result := []Project{}
 
 	for rows.Next() {
-		project, err := projectFromRow(rows)
-		if err != nil {
+		project := Project{}
+
+		if err = rows.Scan(&project.id, &project.name, &project.description, &project.owner); err != nil {
 			return []Project{}, err
 		}
 
@@ -94,33 +95,12 @@ func (Projects) FindByOwner(ctx context.Context, owner string) ([]Project, error
 func (Projects) FindByID(ctx context.Context, id int) (Project, error) {
 	result := Project{}
 
-	err := db.QueryRow("SELECT * FROM projects WHERE ID = ?;", id).Scan(&result.name, &result.description, &ownerid)
-	if err != nil {
-		return Project{}, nil
-	}
-
-	err = db.QueryRow("SELECT Email FROM members WHERE ID = ?;", ownerid).Scan(&result.owner)
-	if err != nil {
-		return Project{}, nil
-	}
-
-	return Project{}, nil
-}
-
-func projectFromRow(rows *sql.Rows) (Project, error) {
-	var ownerid int
-	project := Project{}
-
-	if err := rows.Scan(&project.name, &project.description, &ownerid); err != nil {
+	row := db.QueryRow("SELECT projects.ID, projects.Name, projejcts.Description, members.Email FROM projects, members WHERE projects.Owner = members.ID AND projects.ID = ?;", id)
+	if err := row.Scan(&result.id, &result.name, &result.description, &result.owner); err != nil {
 		return Project{}, err
 	}
 
-	err := db.QueryRow("Select Email from members where ID = ?;", ownerid).Scan(&project.owner)
-	if err != nil {
-		return Project{}, err
-	}
-
-	return project, nil
+	return result, nil
 }
 
 func mkTables(db *sql.DB) error {
