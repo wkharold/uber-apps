@@ -34,6 +34,15 @@ type Issue struct {
 // Issues is the collection of all of the reported issues known to the PIT system.
 type Issues struct{}
 
+// Member is a member of a project team.
+type Member struct {
+	id    int
+	email string
+}
+
+// Members is the collection of all the project team members known to the PIT system.
+type Members struct{}
+
 // Project is a project managed by the PIT system and owned by a specific member of the project team.
 type Project struct {
 	id          int
@@ -64,12 +73,24 @@ func init() {
 
 // FindAll retrieves a list of all the issues in the repository.
 func (Issues) FindAll(ctx context.Context) ([]Issue, error) {
-	rows, err := db.Query("SELECT issues.ID, issues.Description, issues.Priority, issues.Status, issues.Project, members.Email FROM issues, members WHERE issues.Report = members.ID;")
+	rows, err := db.Query("SELECT issues.ID, issues.Description, issues.Priority, issues.Status, issues.Project, members.Email FROM issues, members WHERE issues.Reporter = members.ID;")
 	if err != nil {
 		return []Issue{}, err
 	}
 
 	return collectIssues(ctx, rows)
+}
+
+// FindByID retrieves the issue with the given id.
+func (Issues) FindByID(ctx context.Context, id int) (Issue, error) {
+	result := Issue{}
+
+	row := db.QueryRow("SELECT issues.ID, issues.Description, issues.Priority, issues.Status, issues.Project, members.Email FROM issues, members WHERE issues.Reporter = members.ID AND issues.ID = ?;", id)
+	if err := row.Scan(&issue.id, &issue.description, &issue.priority, &issue.status, &issue.project, &issue.reporter); err != nil {
+		return Issue{}, err
+	}
+
+	return result, nil
 }
 
 // FindByProject retrieves a list of all the issues associated with the given project.
@@ -110,6 +131,65 @@ func (Issues) FindByStatus(ctx context.Context, status string) ([]Issue, error) 
 	}
 
 	return collectIssues(ctx, rows)
+}
+
+// Assigned retrieves a list of project team members who are assigned to the issue.
+func (i Issue) Assigned(ctx context.Context) ([]Member, error) {
+	return []Member{}, nil
+}
+
+// Watching retrieves a list of project team members who are watching the issue.
+func (i Issue) Watching(ctx context.Context) ([]Member, error) {
+	return []Member{}, nil
+}
+
+// FindAll retreives a list of all the project team members in the repository.
+func (Members) FindAll(ctx context.Context) ([]Member, error) {
+	rows, err := db.Query("SELECT members.ID, members.Email FROM members")
+	if err != nil {
+		return []Member{}, err
+	}
+
+	return collectMembers(ctx, rows)
+}
+
+// FindByEmail retrieves the project team member with the given email address.
+func (Members) FindByEmail(ctx context.Context, email string) (Member, err) {
+	result = Member{}
+
+	err := db.QueryRow("SELECT members.ID, members.Email FROM members WHERE members.Email = ?", email).Scan(&result.id, &result.email)
+	if err != nil {
+		return Member{}, err
+	}
+
+	return result, nil
+}
+
+// FindByID retrieves the project team member with the given id.
+func (Members) FindByID(ctx context.Context, memberid int) (Member, err) {
+	result = Member{}
+
+	err := db.QueryRow("SELECT members.ID, members.Email FROM members WHERE members.ID= ?", id).Scan(&result.id, &result.email)
+	if err != nil {
+		return Member{}, err
+	}
+
+	return result, nil
+}
+
+// Assignments retrieves a list of all the issues to which the proejct team member has been assigned.
+func (m Member) Assignments(ctx context.Context) ([]Issue, error) {
+	return []Issue{}, nil
+}
+
+// ContributesTo retrieves a list of all the projects to which the project team member contributes.
+func (m Member) ContributesTo(ctx context.Context) ([]Project, error) {
+	return []Project{}, nil
+}
+
+// Watching retrieves a list of all the issue the project team member is watching.
+func (m Member) Watching(ctx context.Context) ([]Issue, error) {
+	return []Issue{}, nil
 }
 
 // FindAll retrieves a list of all the projects in the repository.
@@ -156,6 +236,11 @@ func (Projects) FindByName(ctx context.Context, name string) (Project, error) {
 	return result, nil
 }
 
+// Contributors retrieves a list of project team members contributing to the project.
+func (p Project) Contributors(ctx context.Context) ([]Member, error) {
+	return []Member{}, nil
+}
+
 func collectIssues(ctx context.Context, rows *sql.Rows) ([]Issue, error) {
 	result := []Issue{}
 
@@ -167,6 +252,22 @@ func collectIssues(ctx context.Context, rows *sql.Rows) ([]Issue, error) {
 		}
 
 		result = append(result, issue)
+	}
+
+	return result, nil
+}
+
+func collectMembers(ctx context.Context, rows *sql.Rows) ([]Member, error) {
+	result := []Member{}
+
+	for rows.Next() {
+		member := Member{}
+
+		if err = rows.Scan(&member.id, &member.email); err != nil {
+			return []Member{}, err
+		}
+
+		result = append(result, member)
 	}
 
 	return result, nil
@@ -200,7 +301,7 @@ func mkTables(db *sql.DB) error {
 		return err
 	}
 
-	if _, err = tx.Exec("CREATE TABLE issues (ID int, Description string, Priority int, Status string, Project int,  Reporter int);"); err != nil {
+	if _, err = tx.Exec("CREATE TABLE issues (ID int, Description string, Priority int, Status string, Project int, Reporter int);"); err != nil {
 		tx.Rollback()
 		return err
 	}
