@@ -64,7 +64,7 @@ func init() {
 		panic(fmt.Sprintf("database ping failed: [%+v]", err))
 	}
 
-	if err = mkTables(); err != nil {
+	if err = mkTables(db); err != nil {
 		panic(fmt.Sprintf("table creation failed: [%+v]", err))
 	}
 
@@ -86,7 +86,7 @@ func (Issues) FindByID(ctx context.Context, id int) (Issue, error) {
 	result := Issue{}
 
 	row := db.QueryRow("SELECT issues.ID, issues.Description, issues.Priority, issues.Status, issues.Project, members.Email FROM issues, members WHERE issues.Reporter = members.ID AND issues.ID = ?;", id)
-	if err := row.Scan(&issue.id, &issue.description, &issue.priority, &issue.status, &issue.project, &issue.reporter); err != nil {
+	if err := row.Scan(&result.id, &result.description, &result.priority, &result.status, &result.project, &result.reporter); err != nil {
 		return Issue{}, err
 	}
 
@@ -154,8 +154,8 @@ func (Members) FindAll(ctx context.Context) ([]Member, error) {
 }
 
 // FindByEmail retrieves the project team member with the given email address.
-func (Members) FindByEmail(ctx context.Context, email string) (Member, err) {
-	result = Member{}
+func (Members) FindByEmail(ctx context.Context, email string) (Member, error) {
+	result := Member{}
 
 	err := db.QueryRow("SELECT members.ID, members.Email FROM members WHERE members.Email = ?", email).Scan(&result.id, &result.email)
 	if err != nil {
@@ -166,10 +166,10 @@ func (Members) FindByEmail(ctx context.Context, email string) (Member, err) {
 }
 
 // FindByID retrieves the project team member with the given id.
-func (Members) FindByID(ctx context.Context, memberid int) (Member, err) {
-	result = Member{}
+func (Members) FindByID(ctx context.Context, memberid int) (Member, error) {
+	result := Member{}
 
-	err := db.QueryRow("SELECT members.ID, members.Email FROM members WHERE members.ID= ?", id).Scan(&result.id, &result.email)
+	err := db.QueryRow("SELECT members.ID, members.Email FROM members WHERE members.ID= ?", memberid).Scan(&result.id, &result.email)
 	if err != nil {
 		return Member{}, err
 	}
@@ -247,7 +247,7 @@ func collectIssues(ctx context.Context, rows *sql.Rows) ([]Issue, error) {
 	for rows.Next() {
 		issue := Issue{}
 
-		if err = rows.Scan(&issue.id, &issue.description, &issue.priority, &issue.status, &issue.project, &issue.reporter); err != nil {
+		if err := rows.Scan(&issue.id, &issue.description, &issue.priority, &issue.status, &issue.project, &issue.reporter); err != nil {
 			return []Issue{}, err
 		}
 
@@ -263,7 +263,7 @@ func collectMembers(ctx context.Context, rows *sql.Rows) ([]Member, error) {
 	for rows.Next() {
 		member := Member{}
 
-		if err = rows.Scan(&member.id, &member.email); err != nil {
+		if err := rows.Scan(&member.id, &member.email); err != nil {
 			return []Member{}, err
 		}
 
@@ -279,7 +279,7 @@ func collectProjects(ctx context.Context, rows *sql.Rows) ([]Project, error) {
 	for rows.Next() {
 		project := Project{}
 
-		if err = rows.Scan(&project.id, &project.name, &project.description, &project.owner); err != nil {
+		if err := rows.Scan(&project.id, &project.name, &project.description, &project.owner); err != nil {
 			return []Project{}, err
 		}
 
