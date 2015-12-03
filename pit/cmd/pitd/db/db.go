@@ -28,7 +28,7 @@ type Issue struct {
 	priority    int
 	status      string
 	project     int
-	reporter    int
+	reporter    string
 }
 
 // Issues is the collection of all of the reported issues known to the PIT system.
@@ -62,6 +62,56 @@ func init() {
 	go nextID(IDs)
 }
 
+// FindAll retrieves a list of all the issues in the repository.
+func (Issues) FindAll(ctx context.Context) ([]Issue, error) {
+	rows, err := db.Query("SELECT issues.ID, issues.Description, issues.Priority, issues.Status, issues.Project, members.Email FROM issues, members WHERE issues.Report = members.ID;")
+	if err != nil {
+		return []Issue{}, err
+	}
+
+	return collectIssues(ctx, rows)
+}
+
+// FindByProject retrieves a list of all the issues associated with the given project.
+func (Issues) FindByProject(ctx context.Context, projectid int) ([]Issue, error) {
+	rows, err := db.Query("SELECT issues.ID, issues.Description, issues.Priority, issues.Status, issues.Project, members.Email FROM issues, members WHERE issues.Reporter = members.ID AND issues.Project = ?;", projectid)
+	if err != nil {
+		return []Issue{}, err
+	}
+
+	return collectIssues(ctx, rows)
+}
+
+// FindByReport retrieves a list of all the issues reported by the specified reporter.
+func (Issues) FindByReporter(ctx context.Context, reporter string) ([]Issue, error) {
+	rows, err := db.Query("SELECT issues.ID, issues.Description, issues.Priority, issues.Status, issues.Project, members.Email FROM issues, members WHERE issues.Reporter = members.ID AND members.Email = ?;", reporter)
+	if err != nil {
+		return []Issue{}, err
+	}
+
+	return collectIssues(ctx, rows)
+}
+
+// FindByPriority retrieves a list of all the issues known to the PIT system with the given priority.
+func (Issues) FindByPriority(ctx context.Context, priority int) ([]Issue, error) {
+	rows, err := db.Query("SELECT issues.ID, issues.Description, issues.Priority, issues.Status, issues.Project, members.Email FROM issues, members WHERE issues.Reporter = members.ID AND issues.Priority = ?;", priority)
+	if err != nil {
+		return []Issue{}, err
+	}
+
+	return collectIssues(ctx, rows)
+}
+
+// FindByStatus retrieves a list of all the issues know to the PIT system with the specified status.
+func (Issues) FindByStatus(ctx context.Context, status string) ([]Issue, error) {
+	rows, err := db.Query("SELECT issues.ID, issues.Description, issues.Priority, issues.Status, issues.Project, members.Email FROM issues, members WHERE issues.Reporter = members.ID AND issues.Status = ?;", status)
+	if err != nil {
+		return []Issue{}, err
+	}
+
+	return collectIssues(ctx, rows)
+}
+
 // FindAll retrieves a list of all the projects in the repository.
 func (Projects) FindAll(ctx context.Context) ([]Project, error) {
 	rows, err := db.Query("SELECT projects.ID, projects.Name, projects.Description, members.Email FROM projects, members WHERE projects.Owner = members.ID")
@@ -69,6 +119,60 @@ func (Projects) FindAll(ctx context.Context) ([]Project, error) {
 		return []Project{}, err
 	}
 
+	return collectProjects(ctx, rows)
+}
+
+// FindByOwner retrieves a list of all projects owned by the specified owner
+func (Projects) FindByOwner(ctx context.Context, owner string) ([]Project, error) {
+	rows, err := db.Query("SELECT projects.ID, projects.Name, projects.Description, members.Email FROM projects, members WHERE projects.Owner = members.ID AND members.Email = ?;", owner)
+	if err != nil {
+		return []Project{}, err
+	}
+
+	return collectProjects(ctx, rows)
+}
+
+// FindByID retrieves the project with the given ID
+func (Projects) FindByID(ctx context.Context, id int) (Project, error) {
+	result := Project{}
+
+	row := db.QueryRow("SELECT projects.ID, projects.Name, projejcts.Description, members.Email FROM projects, members WHERE projects.Owner = members.ID AND projects.ID = ?;", id)
+	if err := row.Scan(&result.id, &result.name, &result.description, &result.owner); err != nil {
+		return Project{}, err
+	}
+
+	return result, nil
+}
+
+// FindByName retrieves the project with the given name
+func (Projects) FindByName(ctx context.Context, name string) (Project, error) {
+	result := Project{}
+
+	row := db.QueryRow("SELECT projects.ID, projects.Name, projejcts.Description, members.Email FROM projects, members WHERE projects.Owner = members.ID AND projects.Name = ?;", name)
+	if err := row.Scan(&result.id, &result.name, &result.description, &result.owner); err != nil {
+		return Project{}, err
+	}
+
+	return result, nil
+}
+
+func collectIssues(ctx context.Context, rows *sql.Rows) ([]Issue, error) {
+	result := []Issue{}
+
+	for rows.Next() {
+		issue := Issue{}
+
+		if err = rows.Scan(&issue.id, &issue.description, &issue.priority, &issue.status, &issue.project, &issue.reporter); err != nil {
+			return []Issue{}, err
+		}
+
+		result = append(result, issue)
+	}
+
+	return result, nil
+}
+
+func collectProjects(ctx context.Context, rows *sql.Rows) ([]Project, error) {
 	result := []Project{}
 
 	for rows.Next() {
@@ -79,46 +183,6 @@ func (Projects) FindAll(ctx context.Context) ([]Project, error) {
 		}
 
 		result = append(result, project)
-	}
-
-	return result, nil
-}
-
-// FindByOwner retrieves a list of all projects owned by the specified owner
-func (Projects) FindByOwner(ctx context.Context, owner string) ([]Project, error) {
-	var ownerid int
-
-	err := db.QueryRow("SELECT ID from members where Email = ?;", owner).Scan(&ownerid)
-	if err != nil {
-		return []Project{}, err
-	}
-
-	rows, err := db.Query("SELECT * from projects where Owner = ?;", ownerid)
-	if err != nil {
-		return []Projects{}, err
-	}
-
-	result := []Project{}
-
-	for rows.Next() {
-		project, err := projectFromRow(rows)
-		if err != nil {
-			return []Project{}, err
-		}
-
-		result = append(result, project)
-	}
-
-	return result, nil
-}
-
-// FindByID retrieves the project with the given ID
-func (Projects) FindByID(ctx context.Context, id int) (Project, error) {
-	result := Project{}
-
-	row := db.QueryRow("SELECT projects.ID, projects.Name, projejcts.Description, members.Email FROM projects, members WHERE projects.Owner = members.ID AND projects.ID = ?;", id)
-	if err := row.Scan(&result.id, &result.name, &result.description, &result.owner); err != nil {
-		return Project{}, err
 	}
 
 	return result, nil
