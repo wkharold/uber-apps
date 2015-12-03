@@ -17,8 +17,8 @@ const (
 )
 
 var (
-	db  *sql.DB
-	IDs chan<- int
+	qldb *sql.DB
+	IDs  chan<- int
 )
 
 // Issue is an issue reported by a member of a project team.
@@ -55,16 +55,16 @@ type Project struct {
 type Projects struct{}
 
 func init() {
-	db, err := sql.Open("ql", "memory://pit.db")
+	qldb, err := sql.Open("ql", "memory://pit.db")
 	if err != nil {
 		panic(fmt.Sprintf("cannot create database instance: [%+v]", err))
 	}
 
-	if err = db.Ping(); err != nil {
+	if err = qldb.Ping(); err != nil {
 		panic(fmt.Sprintf("database ping failed: [%+v]", err))
 	}
 
-	if err = mkTables(db); err != nil {
+	if err = mkTables(qldb); err != nil {
 		panic(fmt.Sprintf("table creation failed: [%+v]", err))
 	}
 
@@ -73,6 +73,8 @@ func init() {
 
 // FindAll retrieves a list of all the issues in the repository.
 func (Issues) FindAll(ctx context.Context) ([]Issue, error) {
+	db := databaseFromContext(ctx)
+
 	rows, err := db.Query("SELECT issues.ID, issues.Description, issues.Priority, issues.Status, issues.Project, members.Email FROM issues, members WHERE issues.Reporter = members.ID;")
 	if err != nil {
 		return []Issue{}, err
@@ -83,6 +85,7 @@ func (Issues) FindAll(ctx context.Context) ([]Issue, error) {
 
 // FindByID retrieves the issue with the given id.
 func (Issues) FindByID(ctx context.Context, id int) (Issue, error) {
+	db := databaseFromContext(ctx)
 	result := Issue{}
 
 	row := db.QueryRow("SELECT issues.ID, issues.Description, issues.Priority, issues.Status, issues.Project, members.Email FROM issues, members WHERE issues.Reporter = members.ID AND issues.ID = ?;", id)
@@ -95,6 +98,8 @@ func (Issues) FindByID(ctx context.Context, id int) (Issue, error) {
 
 // FindByProject retrieves a list of all the issues associated with the given project.
 func (Issues) FindByProject(ctx context.Context, projectid int) ([]Issue, error) {
+	db := databaseFromContext(ctx)
+
 	rows, err := db.Query("SELECT issues.ID, issues.Description, issues.Priority, issues.Status, issues.Project, members.Email FROM issues, members WHERE issues.Reporter = members.ID AND issues.Project = ?;", projectid)
 	if err != nil {
 		return []Issue{}, err
@@ -105,6 +110,8 @@ func (Issues) FindByProject(ctx context.Context, projectid int) ([]Issue, error)
 
 // FindByReport retrieves a list of all the issues reported by the specified reporter.
 func (Issues) FindByReporter(ctx context.Context, reporter string) ([]Issue, error) {
+	db := databaseFromContext(ctx)
+
 	rows, err := db.Query("SELECT issues.ID, issues.Description, issues.Priority, issues.Status, issues.Project, members.Email FROM issues, members WHERE issues.Reporter = members.ID AND members.Email = ?;", reporter)
 	if err != nil {
 		return []Issue{}, err
@@ -115,6 +122,8 @@ func (Issues) FindByReporter(ctx context.Context, reporter string) ([]Issue, err
 
 // FindByPriority retrieves a list of all the issues known to the PIT system with the given priority.
 func (Issues) FindByPriority(ctx context.Context, priority int) ([]Issue, error) {
+	db := databaseFromContext(ctx)
+
 	rows, err := db.Query("SELECT issues.ID, issues.Description, issues.Priority, issues.Status, issues.Project, members.Email FROM issues, members WHERE issues.Reporter = members.ID AND issues.Priority = ?;", priority)
 	if err != nil {
 		return []Issue{}, err
@@ -125,6 +134,8 @@ func (Issues) FindByPriority(ctx context.Context, priority int) ([]Issue, error)
 
 // FindByStatus retrieves a list of all the issues know to the PIT system with the specified status.
 func (Issues) FindByStatus(ctx context.Context, status string) ([]Issue, error) {
+	db := databaseFromContext(ctx)
+
 	rows, err := db.Query("SELECT issues.ID, issues.Description, issues.Priority, issues.Status, issues.Project, members.Email FROM issues, members WHERE issues.Reporter = members.ID AND issues.Status = ?;", status)
 	if err != nil {
 		return []Issue{}, err
@@ -145,6 +156,8 @@ func (i Issue) Watching(ctx context.Context) ([]Member, error) {
 
 // FindAll retreives a list of all the project team members in the repository.
 func (Members) FindAll(ctx context.Context) ([]Member, error) {
+	db := databaseFromContext(ctx)
+
 	rows, err := db.Query("SELECT members.ID, members.Email FROM members")
 	if err != nil {
 		return []Member{}, err
@@ -155,6 +168,7 @@ func (Members) FindAll(ctx context.Context) ([]Member, error) {
 
 // FindByEmail retrieves the project team member with the given email address.
 func (Members) FindByEmail(ctx context.Context, email string) (Member, error) {
+	db := databaseFromContext(ctx)
 	result := Member{}
 
 	err := db.QueryRow("SELECT members.ID, members.Email FROM members WHERE members.Email = ?", email).Scan(&result.id, &result.email)
@@ -167,6 +181,7 @@ func (Members) FindByEmail(ctx context.Context, email string) (Member, error) {
 
 // FindByID retrieves the project team member with the given id.
 func (Members) FindByID(ctx context.Context, memberid int) (Member, error) {
+	db := databaseFromContext(ctx)
 	result := Member{}
 
 	err := db.QueryRow("SELECT members.ID, members.Email FROM members WHERE members.ID= ?", memberid).Scan(&result.id, &result.email)
@@ -194,6 +209,8 @@ func (m Member) Watching(ctx context.Context) ([]Issue, error) {
 
 // FindAll retrieves a list of all the projects in the repository.
 func (Projects) FindAll(ctx context.Context) ([]Project, error) {
+	db := databaseFromContext(ctx)
+
 	rows, err := db.Query("SELECT projects.ID, projects.Name, projects.Description, members.Email FROM projects, members WHERE projects.Owner = members.ID")
 	if err != nil {
 		return []Project{}, err
@@ -204,6 +221,8 @@ func (Projects) FindAll(ctx context.Context) ([]Project, error) {
 
 // FindByOwner retrieves a list of all projects owned by the specified owner
 func (Projects) FindByOwner(ctx context.Context, owner string) ([]Project, error) {
+	db := databaseFromContext(ctx)
+
 	rows, err := db.Query("SELECT projects.ID, projects.Name, projects.Description, members.Email FROM projects, members WHERE projects.Owner = members.ID AND members.Email = ?;", owner)
 	if err != nil {
 		return []Project{}, err
@@ -214,6 +233,7 @@ func (Projects) FindByOwner(ctx context.Context, owner string) ([]Project, error
 
 // FindByID retrieves the project with the given ID
 func (Projects) FindByID(ctx context.Context, id int) (Project, error) {
+	db := databaseFromContext(ctx)
 	result := Project{}
 
 	row := db.QueryRow("SELECT projects.ID, projects.Name, projejcts.Description, members.Email FROM projects, members WHERE projects.Owner = members.ID AND projects.ID = ?;", id)
@@ -226,6 +246,7 @@ func (Projects) FindByID(ctx context.Context, id int) (Project, error) {
 
 // FindByName retrieves the project with the given name
 func (Projects) FindByName(ctx context.Context, name string) (Project, error) {
+	db := databaseFromContext(ctx)
 	result := Project{}
 
 	row := db.QueryRow("SELECT projects.ID, projects.Name, projejcts.Description, members.Email FROM projects, members WHERE projects.Owner = members.ID AND projects.Name = ?;", name)
@@ -287,6 +308,14 @@ func collectProjects(ctx context.Context, rows *sql.Rows) ([]Project, error) {
 	}
 
 	return result, nil
+}
+
+func databaseFromContext(ctx context.Context) *sql.DB {
+	result := ctx.Value("database").(*sql.DB)
+	if result != nil {
+		return result
+	}
+	return qldb
 }
 
 func mkTables(db *sql.DB) error {
