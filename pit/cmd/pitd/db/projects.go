@@ -33,7 +33,7 @@ func (Projects) FindAll(ctx context.Context) ([]Project, error) {
 func (Projects) FindByOwner(ctx context.Context, owner string) ([]Project, error) {
 	db := databaseFromContext(ctx)
 
-	rows, err := db.Query("SELECT projects.ID, projects.Name, projects.Description, members.Email FROM projects, members WHERE projects.Owner == members.ID AND members.Email == ?;", owner)
+	rows, err := db.Query("SELECT projects.ID, projects.Name, projects.Description, members.Email FROM projects, members WHERE projects.Owner == members.ID AND members.Email == $1 ORDER BY projects.ID;", owner)
 	if err != nil {
 		return []Project{}, err
 	}
@@ -46,7 +46,7 @@ func (Projects) FindByID(ctx context.Context, id int) (Project, error) {
 	db := databaseFromContext(ctx)
 	result := Project{}
 
-	row := db.QueryRow("SELECT projects.ID, projects.Name, projejcts.Description, members.Email FROM projects, members WHERE projects.Owner == members.ID AND projects.ID == ?;", id)
+	row := db.QueryRow("SELECT projects.ID, projects.Name, projects.Description, members.Email FROM projects, members WHERE projects.Owner == members.ID AND projects.ID == $1;", id)
 	if err := row.Scan(&result.id, &result.name, &result.description, &result.owner); err != nil {
 		return Project{}, err
 	}
@@ -59,7 +59,7 @@ func (Projects) FindByName(ctx context.Context, name string) (Project, error) {
 	db := databaseFromContext(ctx)
 	result := Project{}
 
-	row := db.QueryRow("SELECT projects.ID, projects.Name, projejcts.Description, members.Email FROM projects, members WHERE projects.Owner == members.ID AND projects.Name == ?;", name)
+	row := db.QueryRow("SELECT projects.ID, projects.Name, projects.Description, members.Email FROM projects, members WHERE projects.Owner == members.ID AND projects.Name == $1;", name)
 	if err := row.Scan(&result.id, &result.name, &result.description, &result.owner); err != nil {
 		return Project{}, err
 	}
