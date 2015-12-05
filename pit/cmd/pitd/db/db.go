@@ -7,7 +7,7 @@ import (
 
 	"golang.org/x/net/context"
 
-	_ "github.com/cznic/ql"
+	_ "github.com/cznic/ql/driver"
 )
 
 const (

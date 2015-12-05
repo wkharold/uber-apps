@@ -1,16 +1,36 @@
 package db
 
-import "testing"
+import (
+	"testing"
+
+	"golang.org/x/net/context"
+)
+
+type setfindertest struct {
+	description string
+	ffn         func(Projects, ctx context.Context) ([]Project, error)
+	ctx         context.Context
+	expected    []Project
+}
 
 type findertest struct {
 	description string
+	ffn         func(Projects, ctx context.Context) (Project, error)
+	ctx         context.Context
+	expected    Project
 }
 
 var (
-	findertests = []findertest{}
+	setfindertests = []setfindertest{}
+	findertests    = []findertest{}
 )
 
+func TestSetFinders(t *testing.T) {
+	for _, _ = range setfindertests {
+	}
+}
+
 func TestFinders(t *testing.T) {
-	for _, ft := range findertests {
+	for _, _ = range findertests {
 	}
 }
