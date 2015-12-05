@@ -8,6 +8,14 @@ import (
 	"golang.org/x/net/context"
 )
 
+type contributorstest struct {
+	description string
+	fn          func(context.Context) ([]Member, error)
+	ctxfn       func() context.Context
+	expected    []Member
+	err         error
+}
+
 type findalltest struct {
 	description string
 	ffn         func(Projects, context.Context) ([]Project, error)
@@ -54,6 +62,9 @@ var (
 		id: 103, name: "project three", description: "third test project", owner: "owner@test.io",
 	}
 
+	contributorstests = []contributorstest{
+		{"Contributors no contributors", pone.Contributors, contributors, []Member{}, nil},
+	}
 	findalltests = []findalltest{
 		{"FindAll from empty tables", Projects.FindAll, emptytables, []Project{}, nil},
 		{"FindAll one project", Projects.FindAll, oneproject, []Project{pone}, nil},
@@ -169,8 +180,8 @@ func TestFindByName(t *testing.T) {
 	}
 }
 
-func emptytables() context.Context {
-	db := createdb("emptytables")
+func contributors() context.Context {
+	db := createdb("contributors")
 
 	ctx := context.Background()
 	ctx = context.WithValue(ctx, "database", db)
@@ -178,26 +189,11 @@ func emptytables() context.Context {
 	return ctx
 }
 
-func oneproject() context.Context {
-	db := createdb("oneproject")
+func emptytables() context.Context {
+	db := createdb("emptytables")
 
 	ctx := context.Background()
 	ctx = context.WithValue(ctx, "database", db)
-
-	tx, err := db.Begin()
-	if err != nil {
-		panic(fmt.Sprintf("cannot create a transaction to setup the database: [%+v]", err))
-	}
-
-	if _, err := tx.Exec(`INSERT INTO projects VALUES (101, "project one", "first test project", 1001);`); err != nil {
-		panic(fmt.Sprintf("cannot setup projects table: [%+v]", err))
-	}
-
-	if _, err := tx.Exec(`INSERT INTO members VALUES (1001, "owner@test.net");`); err != nil {
-		panic(fmt.Sprintf("cannot setup members table: [%+v]", err))
-	}
-
-	tx.Commit()
 
 	return ctx
 }
@@ -223,6 +219,30 @@ func manyprojects() context.Context {
 	if _, err := tx.Exec(`INSERT INTO members VALUES 
 						  (1001, "owner@test.net"),
 						  (1002, "owner@test.io");`); err != nil {
+		panic(fmt.Sprintf("cannot setup members table: [%+v]", err))
+	}
+
+	tx.Commit()
+
+	return ctx
+}
+
+func oneproject() context.Context {
+	db := createdb("oneproject")
+
+	ctx := context.Background()
+	ctx = context.WithValue(ctx, "database", db)
+
+	tx, err := db.Begin()
+	if err != nil {
+		panic(fmt.Sprintf("cannot create a transaction to setup the database: [%+v]", err))
+	}
+
+	if _, err := tx.Exec(`INSERT INTO projects VALUES (101, "project one", "first test project", 1001);`); err != nil {
+		panic(fmt.Sprintf("cannot setup projects table: [%+v]", err))
+	}
+
+	if _, err := tx.Exec(`INSERT INTO members VALUES (1001, "owner@test.net");`); err != nil {
 		panic(fmt.Sprintf("cannot setup members table: [%+v]", err))
 	}
 
