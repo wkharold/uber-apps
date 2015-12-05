@@ -211,7 +211,7 @@ func (m Member) Watching(ctx context.Context) ([]Issue, error) {
 func (Projects) FindAll(ctx context.Context) ([]Project, error) {
 	db := databaseFromContext(ctx)
 
-	rows, err := db.Query("SELECT projects.ID, projects.Name, projects.Description, members.Email FROM projects, members WHERE projects.Owner == members.ID")
+	rows, err := db.Query("SELECT projects.ID, projects.Name, projects.Description, members.Email FROM projects, members WHERE projects.Owner == members.ID ORDER BY projects.ID")
 	if err != nil {
 		return []Project{}, err
 	}
