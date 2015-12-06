@@ -152,6 +152,15 @@ func dropdb(db *sql.DB) {
 	tx.Commit()
 }
 
+func emptytables() context.Context {
+	db := createdb("emptytables")
+
+	ctx := context.Background()
+	ctx = context.WithValue(ctx, "database", db)
+
+	return ctx
+}
+
 func samemembers(a, b []Member) bool {
 	switch {
 	case a == nil && b == nil:

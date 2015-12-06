@@ -52,11 +52,7 @@ type findProjectsByNameTest struct {
 }
 
 var (
-	bob   = Member{id: 1003, email: "bob@members.com"}
-	carol = Member{id: 1004, email: "carol@members.com"}
-	ted   = Member{id: 1005, email: "ted@members.com"}
-	alice = Member{id: 1006, email: "alice@members.com"}
-	pone  = Project{
+	pone = Project{
 		id: 101, name: "project one", description: "first test project", owner: "owner@test.net",
 	}
 	ptwo = Project{
@@ -245,15 +241,6 @@ func contributors() context.Context {
 	}
 
 	tx.Commit()
-
-	return ctx
-}
-
-func emptytables() context.Context {
-	db := createdb("emptytables")
-
-	ctx := context.Background()
-	ctx = context.WithValue(ctx, "database", db)
 
 	return ctx
 }

@@ -2,6 +2,7 @@ package db
 
 import (
 	"database/sql"
+	"fmt"
 	"testing"
 
 	"golang.org/x/net/context"
@@ -16,7 +17,16 @@ type findAllMembersTest struct {
 }
 
 var (
-	findAllMemberTests = []findAllMembersTest{}
+	bob   = Member{id: 1003, email: "bob@members.com"}
+	carol = Member{id: 1004, email: "carol@members.com"}
+	ted   = Member{id: 1005, email: "ted@members.com"}
+	alice = Member{id: 1006, email: "alice@members.com"}
+
+	findAllMemberTests = []findAllMembersTest{
+		{"FindAll no members", Members.FindAll, emptytables, []Member{}, nil},
+		{"FindAll one member", Members.FindAll, onemember, []Member{bob}, nil},
+		{"FindAll members", Members.FindAll, manymembers, []Member{carol, ted, alice}, nil},
+	}
 )
 
 func TestFindAllMembers(t *testing.T) {
@@ -39,4 +49,47 @@ func TestFindAllMembers(t *testing.T) {
 
 		dropdb(db)
 	}
+}
+
+func onemember() context.Context {
+	db := createdb("onemember")
+
+	ctx := context.Background()
+	ctx = context.WithValue(ctx, "database", db)
+
+	tx, err := db.Begin()
+	if err != nil {
+		panic(fmt.Sprintf("cannot create transaction to setup the database: [%+v]", err))
+	}
+
+	if _, err := tx.Exec(`INSERT INTO members VALUES (1003, "bob@members.com");`); err != nil {
+		panic(fmt.Sprintf("cannot setup members table: [%+v]", err))
+	}
+
+	tx.Commit()
+
+	return ctx
+}
+
+func manymembers() context.Context {
+	db := createdb("manymembers")
+
+	ctx := context.Background()
+	ctx = context.WithValue(ctx, "database", db)
+
+	tx, err := db.Begin()
+	if err != nil {
+		panic(fmt.Sprintf("cannot create transaction to setup the database: [%+v]", err))
+	}
+
+	if _, err := tx.Exec(`INSERT INTO members VALUES 
+						  (1004, "carol@members.com"),
+						  (1005, "ted@members.com"),
+						  (1006, "alice@members.com");`); err != nil {
+		panic(fmt.Sprintf("cannot setup members table: [%+v]", err))
+	}
+
+	tx.Commit()
+
+	return ctx
 }
