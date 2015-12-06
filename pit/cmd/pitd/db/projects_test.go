@@ -52,7 +52,11 @@ type findbynametest struct {
 }
 
 var (
-	pone = Project{
+	bob   = Member{id: 1003, email: "bob@members.com"}
+	carol = Member{id: 1004, email: "carol@members.com"}
+	ted   = Member{id: 1005, email: "ted@members.com"}
+	alice = Member{id: 1006, email: "alice@members.com"}
+	pone  = Project{
 		id: 101, name: "project one", description: "first test project", owner: "owner@test.net",
 	}
 	ptwo = Project{
@@ -64,6 +68,8 @@ var (
 
 	contributorstests = []contributorstest{
 		{"Contributors no contributors", pone.Contributors, contributors, []Member{}, nil},
+		{"Contributors single contributor", ptwo.Contributors, contributors, []Member{alice}, nil},
+		{"Contributors multiple", pthree.Contributors, contributors, []Member{carol, ted, alice}, nil},
 	}
 	findalltests = []findalltest{
 		{"FindAll from empty tables", Projects.FindAll, emptytables, []Project{}, nil},
@@ -92,6 +98,28 @@ var (
 	}
 )
 
+func TestContributors(t *testing.T) {
+	for _, nt := range contributorstests {
+		ctx := nt.ctxfn()
+		db := ctx.Value("database").(*sql.DB)
+
+		cs, err := nt.fn(ctx)
+		if err != nil {
+			t.Errorf("%s: unexpected error [%+v]", nt.description, err)
+			dropdb(db)
+			continue
+		}
+
+		if !samemembers(nt.expected, cs) {
+			t.Errorf("%s: expected %+v, got %+v", nt.description, nt.expected, cs)
+			dropdb(db)
+			continue
+		}
+
+		dropdb(db)
+	}
+}
+
 func TestFindAll(t *testing.T) {
 	for _, nt := range findalltests {
 		ctx := nt.ctxfn()
@@ -104,7 +132,7 @@ func TestFindAll(t *testing.T) {
 			continue
 		}
 
-		if !rowsequal(nt.expected, ps) {
+		if !sameprojects(nt.expected, ps) {
 			t.Errorf("%s: expected %+v, got %+v", nt.description, nt.expected, ps)
 			dropdb(db)
 			continue
@@ -126,7 +154,7 @@ func TestFindByOwner(t *testing.T) {
 			continue
 		}
 
-		if !rowsequal(nt.expected, ps) {
+		if !sameprojects(nt.expected, ps) {
 			t.Errorf("%s: expected %+v, got %+v", nt.description, nt.expected, ps)
 			dropdb(db)
 			continue
@@ -185,6 +213,38 @@ func contributors() context.Context {
 
 	ctx := context.Background()
 	ctx = context.WithValue(ctx, "database", db)
+
+	tx, err := db.Begin()
+	if err != nil {
+		panic(fmt.Sprintf("cannot create transaction to setup the database: [%+v]", err))
+	}
+
+	if _, err := tx.Exec(`INSERT INTO projects VALUES 
+						  (101, "project one", "first test project", 1001),
+						  (102, "project two", "second test project", 1001),
+						  (103, "project three", "third test project", 1002);`); err != nil {
+		panic(fmt.Sprintf("cannot setup projects table: [%+v]", err))
+	}
+
+	if _, err := tx.Exec(`INSERT INTO members VALUES 
+						  (1001, "owner@test.net"),
+						  (1002, "owner@test.io"),
+						  (1003, "bob@members.com"),
+						  (1004, "carol@members.com"),
+						  (1005, "ted@members.com"),
+						  (1006, "alice@members.com");`); err != nil {
+		panic(fmt.Sprintf("cannot setup members table: [%+v]", err))
+	}
+
+	if _, err := tx.Exec(`INSERT INTO contributors VALUES
+						  (102, 1006),
+						  (103, 1004),
+						  (103, 1005),
+						  (103, 1006);`); err != nil {
+		panic(fmt.Sprintf("cannot setup contributors table: [%+v]", err))
+	}
+
+	tx.Commit()
 
 	return ctx
 }

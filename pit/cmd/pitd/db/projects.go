@@ -69,7 +69,14 @@ func (Projects) FindByName(ctx context.Context, name string) (Project, error) {
 
 // Contributors retrieves a list of project team members contributing to the project.
 func (p Project) Contributors(ctx context.Context) ([]Member, error) {
-	return []Member{}, nil
+	db := databaseFromContext(ctx)
+
+	rows, err := db.Query("SELECT members.ID, members.Email FROM members FULL JOIN contributors ON (members.ID == contributors.MID) WHERE contributors.PID == $1 ORDER BY members.ID;", p.id)
+	if err != nil {
+		return []Member{}, err
+	}
+
+	return collectMembers(ctx, rows)
 }
 
 func collectProjects(ctx context.Context, rows *sql.Rows) ([]Project, error) {
