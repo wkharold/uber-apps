@@ -19,7 +19,7 @@ type Members struct{}
 func (Members) FindAll(ctx context.Context) ([]Member, error) {
 	db := databaseFromContext(ctx)
 
-	rows, err := db.Query("SELECT members.ID, members.Email FROM members")
+	rows, err := db.Query("SELECT members.ID, members.Email FROM members ORDER BY members.ID;")
 	if err != nil {
 		return []Member{}, err
 	}
@@ -32,7 +32,7 @@ func (Members) FindByEmail(ctx context.Context, email string) (Member, error) {
 	db := databaseFromContext(ctx)
 	result := Member{}
 
-	err := db.QueryRow("SELECT members.ID, members.Email FROM members WHERE members.Email == ?", email).Scan(&result.id, &result.email)
+	err := db.QueryRow("SELECT members.ID, members.Email FROM members WHERE members.Email == $1;", email).Scan(&result.id, &result.email)
 	if err != nil {
 		return Member{}, err
 	}
@@ -45,7 +45,7 @@ func (Members) FindByID(ctx context.Context, memberid int) (Member, error) {
 	db := databaseFromContext(ctx)
 	result := Member{}
 
-	err := db.QueryRow("SELECT members.ID, members.Email FROM members WHERE members.ID == ?", memberid).Scan(&result.id, &result.email)
+	err := db.QueryRow("SELECT members.ID, members.Email FROM members WHERE members.ID == $1", memberid).Scan(&result.id, &result.email)
 	if err != nil {
 		return Member{}, err
 	}
