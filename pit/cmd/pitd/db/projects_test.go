@@ -16,7 +16,7 @@ type contributorstest struct {
 	err         error
 }
 
-type findalltest struct {
+type findAllProjectsTest struct {
 	description string
 	ffn         func(Projects, context.Context) ([]Project, error)
 	ctxfn       func() context.Context
@@ -24,7 +24,7 @@ type findalltest struct {
 	err         error
 }
 
-type findbyownertest struct {
+type findProjectsByOwnerTest struct {
 	description string
 	ffn         func(Projects, context.Context, string) ([]Project, error)
 	owner       string
@@ -33,7 +33,7 @@ type findbyownertest struct {
 	err         error
 }
 
-type findbyidtest struct {
+type findProjectsByIDTest struct {
 	description string
 	ffn         func(Projects, context.Context, int) (Project, error)
 	id          int
@@ -42,7 +42,7 @@ type findbyidtest struct {
 	err         error
 }
 
-type findbynametest struct {
+type findProjectsByNameTest struct {
 	description string
 	ffn         func(Projects, context.Context, string) (Project, error)
 	name        string
@@ -71,12 +71,12 @@ var (
 		{"Contributors single contributor", ptwo.Contributors, contributors, []Member{alice}, nil},
 		{"Contributors multiple", pthree.Contributors, contributors, []Member{carol, ted, alice}, nil},
 	}
-	findalltests = []findalltest{
+	findAllProjectsTests = []findAllProjectsTest{
 		{"FindAll from empty tables", Projects.FindAll, emptytables, []Project{}, nil},
 		{"FindAll one project", Projects.FindAll, oneproject, []Project{pone}, nil},
 		{"FindAll multiple projects", Projects.FindAll, manyprojects, []Project{pone, ptwo, pthree}, nil},
 	}
-	findbyownertests = []findbyownertest{
+	findProjectsByOwnerTests = []findProjectsByOwnerTest{
 		{"FindByOwner from empty tables", Projects.FindByOwner, "owner@test.net", emptytables, []Project{}, nil},
 		{"FindByOwner one project no match", Projects.FindByOwner, "owner@test.org", oneproject, []Project{}, nil},
 		{"FindByOwner multiple projects no match", Projects.FindByOwner, "owner@test.com", manyprojects, []Project{}, nil},
@@ -84,13 +84,13 @@ var (
 		{"FindByOwner multiple projects one match", Projects.FindByOwner, "owner@test.io", manyprojects, []Project{pthree}, nil},
 		{"FindByOwner multiple projects", Projects.FindByOwner, "owner@test.net", manyprojects, []Project{pone, ptwo}, nil},
 	}
-	findbyidtests = []findbyidtest{
+	findProjectsByIDTests = []findProjectsByIDTest{
 		{"FindByID empty tables", Projects.FindByID, 42, emptytables, Project{}, sql.ErrNoRows},
 		{"FindByID multiple projects none match", Projects.FindByID, 42, manyprojects, Project{}, sql.ErrNoRows},
 		{"FindByID one project", Projects.FindByID, 101, oneproject, pone, nil},
 		{"FindByID multiple projects", Projects.FindByID, 103, manyprojects, pthree, nil},
 	}
-	findbynametests = []findbynametest{
+	findProjectsByNameTests = []findProjectsByNameTest{
 		{"FindByName empty tables", Projects.FindByName, "unknown", emptytables, Project{}, sql.ErrNoRows},
 		{"FindByName multiple projects none match", Projects.FindByName, "unknown", manyprojects, Project{}, sql.ErrNoRows},
 		{"FindByName one project", Projects.FindByName, "project one", oneproject, pone, nil},
@@ -120,8 +120,8 @@ func TestContributors(t *testing.T) {
 	}
 }
 
-func TestFindAll(t *testing.T) {
-	for _, nt := range findalltests {
+func TestFindAllProjects(t *testing.T) {
+	for _, nt := range findAllProjectsTests {
 		ctx := nt.ctxfn()
 		db := ctx.Value("database").(*sql.DB)
 
@@ -142,8 +142,8 @@ func TestFindAll(t *testing.T) {
 	}
 }
 
-func TestFindByOwner(t *testing.T) {
-	for _, nt := range findbyownertests {
+func TestFindProjectsByOwner(t *testing.T) {
+	for _, nt := range findProjectsByOwnerTests {
 		ctx := nt.ctxfn()
 		db := ctx.Value("database").(*sql.DB)
 
@@ -164,8 +164,8 @@ func TestFindByOwner(t *testing.T) {
 	}
 }
 
-func TestFindByID(t *testing.T) {
-	for _, nt := range findbyidtests {
+func TestFindProjectsByID(t *testing.T) {
+	for _, nt := range findProjectsByIDTests {
 		ctx := nt.ctxfn()
 		db := ctx.Value("database").(*sql.DB)
 
@@ -186,8 +186,8 @@ func TestFindByID(t *testing.T) {
 	}
 }
 
-func TestFindByName(t *testing.T) {
-	for _, nt := range findbynametests {
+func TestFindProjectsByName(t *testing.T) {
+	for _, nt := range findProjectsByNameTests {
 		ctx := nt.ctxfn()
 		db := ctx.Value("database").(*sql.DB)
 
