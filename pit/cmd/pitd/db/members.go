@@ -60,7 +60,23 @@ func (m Member) Assignments(ctx context.Context) ([]Issue, error) {
 
 // ContributesTo retrieves a list of all the projects to which the project team member contributes.
 func (m Member) ContributesTo(ctx context.Context) ([]Project, error) {
-	return []Project{}, nil
+	db := databaseFromContext(ctx)
+
+	rows, err := db.Query(`
+	SELECT P.PID, P.Name, P.Description, P.Email
+	FROM (SELECT projects.ID AS PID, projects.Name AS Name, projects.Description AS Description, members.Email AS Email
+		  FROM projects, members
+		  WHERE projects.Owner == members.ID
+		  ORDER BY PID) AS P
+		 FULL JOIN contributors ON (P.PID == contributors.PID)
+	WHERE contributors.MID == $1
+	ORDER BY P.PID
+	`, m.id)
+	if err != nil {
+		return []Project{}, err
+	}
+
+	return collectProjects(ctx, rows)
 }
 
 // Watching retrieves a list of all the issue the project team member is watching.

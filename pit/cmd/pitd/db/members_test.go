@@ -8,6 +8,14 @@ import (
 	"golang.org/x/net/context"
 )
 
+type contributesToTest struct {
+	description string
+	fn          func(context.Context) ([]Project, error)
+	ctxfn       func() context.Context
+	expected    []Project
+	err         error
+}
+
 type findAllMembersTest struct {
 	description string
 	fn          func(Members, context.Context) ([]Member, error)
@@ -39,7 +47,14 @@ var (
 	carol = Member{id: 1004, email: "carol@members.com"}
 	ted   = Member{id: 1005, email: "ted@members.com"}
 	alice = Member{id: 1006, email: "alice@members.com"}
+)
 
+var (
+	contributesToTests = []contributesToTest{
+		{"ContributesTo no contributions", bob.ContributesTo, contributions, []Project{}, nil},
+		{"ContributesTo one project", carol.ContributesTo, contributions, []Project{pone}, nil},
+		{"ContributesTo many projects", alice.ContributesTo, contributions, []Project{pone, pthree}, nil},
+	}
 	findAllMemberTests = []findAllMembersTest{
 		{"FindAll no members", Members.FindAll, emptytables, []Member{}, nil},
 		{"FindAll one member", Members.FindAll, onemember, []Member{bob}, nil},
@@ -58,6 +73,28 @@ var (
 		{"FindByID members", Members.FindByID, 1005, manymembers, ted, nil},
 	}
 )
+
+func TestMemberContributesTo(t *testing.T) {
+	for _, nt := range contributesToTests {
+		ctx := nt.ctxfn()
+		db := ctx.Value("database").(*sql.DB)
+
+		ps, err := nt.fn(ctx)
+		switch {
+		case err != nil && err != nt.err:
+			t.Errorf("%s: unexpected error [%+v]", nt.description, err)
+		case err != nil && err == nt.err:
+			break
+		default:
+			if !sameprojects(ps, nt.expected) {
+				t.Errorf("%s: got %+v, expected %+v", nt.description, ps, nt.expected)
+				break
+			}
+		}
+
+		dropdb(db)
+	}
+}
 
 func TestFindAllMembers(t *testing.T) {
 	for _, nt := range findAllMemberTests {
@@ -123,6 +160,46 @@ func TestFindMembersByID(t *testing.T) {
 
 		dropdb(db)
 	}
+}
+
+func contributions() context.Context {
+	db := createdb("contributions")
+
+	ctx := context.Background()
+	ctx = context.WithValue(ctx, "database", db)
+
+	tx, err := db.Begin()
+	if err != nil {
+		panic(fmt.Sprintf("cannot create transaction to setup the database: [%v]", err))
+	}
+
+	if _, err := tx.Exec(`INSERT INTO projects VALUES
+						  (101, "project one", "first test project", 1001),
+						  (102, "project two", "second test project", 1001),
+						  (103, "project three", "third test project", 1002);`); err != nil {
+		panic(fmt.Sprintf("cannot setup projects table: [%+v]", err))
+	}
+
+	if _, err := tx.Exec(`INSERT INTO members VALUES
+						  (1001, "owner@test.net"),
+						  (1002, "owner@test.io"),
+						  (1003, "bob@members.com"),
+						  (1004, "carol@members.com"),
+						  (1005, "ted@members.com"),
+						  (1006, "alice@members.com");`); err != nil {
+		panic(fmt.Sprintf("cannot setup members table: [%+v]", err))
+	}
+
+	if _, err := tx.Exec(`INSERT INTO contributors VALUES
+						  (101, 1006),
+						  (101, 1004),
+						  (103, 1006);`); err != nil {
+		panic(fmt.Sprintf("cannot setup contributors table: [%+v]", err))
+	}
+
+	tx.Commit()
+
+	return ctx
 }
 
 func onemember() context.Context {
