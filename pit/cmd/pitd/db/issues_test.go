@@ -1,6 +1,7 @@
 package db
 
 import (
+	"database/sql"
 	"testing"
 
 	"golang.org/x/net/context"
@@ -51,10 +52,18 @@ type findIssuesByReporterTest struct {
 }
 
 type findIssuesByStatusTest struct {
+	description string
+	fn          func(Issues, context.Context, string) ([]Issue, error)
+	status      string
+	ctxfn       func() context.Context
+	expected    []Issue
+	err         error
 }
 
 var (
-	findAllIssuesTests        = []findAllIssuesTest{}
+	findAllIssuesTests = []findAllIssuesTest{
+		{"FindAll empty tables", Issues.FindAll, emptytables, []Issue{}, nil},
+	}
 	findIssuesByIDTests       = []findIssuesByIDTest{}
 	findIssuesByPriorityTests = []findIssuesByPriorityTest{}
 	findIssuesByProjectTests  = []findIssuesByProjectTest{}
@@ -63,25 +72,100 @@ var (
 )
 
 func TestFindAllIssues(t *testing.T) {
-	t.Fail("Unimplemented")
+	for _, nt := range findAllIssuesTests {
+		ctx := nt.ctxfn()
+		db := ctx.Value("database").(*sql.DB)
+
+		is, err := nt.fn(struct{}{}, ctx)
+		switch {
+		case err != nil:
+			t.Errorf("%s: unexpected error [%+v]", nt.description, err)
+		case !sameissues(nt.expected, is):
+			t.Errorf("%s: expected %+v, got %+v", nt.description, nt.expected, is)
+		default:
+			break
+		}
+
+		dropdb(db)
+	}
 }
 
 func TestFindIssuesByID(t *testing.T) {
-	t.Fail("Unimplemented")
+	t.Fail()
 }
 
 func TestFindIssuesByPriority(t *testing.T) {
-	t.Fail("Unimplemented")
+	for _, nt := range findIssuesByPriorityTests {
+		ctx := nt.ctxfn()
+		db := ctx.Value("database").(*sql.DB)
+
+		is, err := nt.fn(struct{}{}, ctx, nt.priority)
+		switch {
+		case err != nil:
+			t.Errorf("%s: unexpected error [%+v]", nt.description, err)
+		case !sameissues(nt.expected, is):
+			t.Errorf("%s: expected %+v, got %+v", nt.description, nt.expected, is)
+		default:
+			break
+		}
+
+		dropdb(db)
+	}
 }
 
 func TestFindIssuesByProject(t *testing.T) {
-	t.Fail("Unimplemented")
+	for _, nt := range findIssuesByProjectTests {
+		ctx := nt.ctxfn()
+		db := ctx.Value("database").(*sql.DB)
+
+		is, err := nt.fn(struct{}{}, ctx, nt.project)
+		switch {
+		case err != nil:
+			t.Errorf("%s: unexpected error [%+v]", nt.description, err)
+		case !sameissues(nt.expected, is):
+			t.Errorf("%s: expected %+v, got %+v", nt.description, nt.expected, is)
+		default:
+			break
+		}
+
+		dropdb(db)
+	}
 }
 
-func TestFindIssuesByReport(t *testing.T) {
-	t.Fail("Unimplemented")
+func TestFindIssuesByReporter(t *testing.T) {
+	for _, nt := range findIssuesByReporterTests {
+		ctx := nt.ctxfn()
+		db := ctx.Value("database").(*sql.DB)
+
+		is, err := nt.fn(struct{}{}, ctx, nt.reporter)
+		switch {
+		case err != nil:
+			t.Errorf("%s: unexpected error [%+v]", nt.description, err)
+		case !sameissues(nt.expected, is):
+			t.Errorf("%s: expected %+v, got %+v", nt.description, nt.expected, is)
+		default:
+			break
+		}
+
+		dropdb(db)
+	}
 }
 
 func TestFindIssuesByStatus(t *testing.T) {
-	t.Fail("Unimplemented")
+	for _, nt := range findIssuesByStatusTests {
+		ctx := nt.ctxfn()
+		db := ctx.Value("database").(*sql.DB)
+
+		is, err := nt.fn(struct{}{}, ctx, nt.status)
+		switch {
+		case err != nil:
+			t.Errorf("%s: unexpected error [%+v]", nt.description, err)
+		case !sameissues(nt.expected, is):
+			t.Errorf("%s: expected %+v, got %+v", nt.description, nt.expected, is)
+		default:
+			break
+		}
+
+		dropdb(db)
+	}
 }

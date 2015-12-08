@@ -161,6 +161,23 @@ func emptytables() context.Context {
 	return ctx
 }
 
+func sameissues(a, b []Issue) bool {
+	switch {
+	case a == nil && b == nil:
+		return true
+	case a == nil || b == nil:
+		return false
+	case len(a) != len(b):
+		return false
+	default:
+		for i := range a {
+			if a[i] != b[i] {
+				return false
+			}
+		}
+		return true
+	}
+}
 func samemembers(a, b []Member) bool {
 	switch {
 	case a == nil && b == nil:
@@ -178,6 +195,7 @@ func samemembers(a, b []Member) bool {
 		return true
 	}
 }
+
 func sameprojects(a, b []Project) bool {
 	switch {
 	case a == nil && b == nil:
