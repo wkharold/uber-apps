@@ -36,7 +36,7 @@ func (Issues) FindByID(ctx context.Context, id int) (Issue, error) {
 	db := databaseFromContext(ctx)
 	result := Issue{}
 
-	row := db.QueryRow("SELECT issues.ID, issues.Description, issues.Priority, issues.Status, issues.Project, members.Email FROM issues, members WHERE issues.Reporter == members.ID AND issues.ID = ?;", id)
+	row := db.QueryRow("SELECT issues.ID, issues.Description, issues.Priority, issues.Status, issues.Project, members.Email FROM issues, members WHERE issues.Reporter == members.ID AND issues.ID == $1;", id)
 	if err := row.Scan(&result.id, &result.description, &result.priority, &result.status, &result.project, &result.reporter); err != nil {
 		return Issue{}, err
 	}
@@ -48,7 +48,7 @@ func (Issues) FindByID(ctx context.Context, id int) (Issue, error) {
 func (Issues) FindByProject(ctx context.Context, projectid int) ([]Issue, error) {
 	db := databaseFromContext(ctx)
 
-	rows, err := db.Query("SELECT issues.ID, issues.Description, issues.Priority, issues.Status, issues.Project, members.Email FROM issues, members WHERE issues.Reporter == members.ID AND issues.Project = ?;", projectid)
+	rows, err := db.Query("SELECT issues.ID, issues.Description, issues.Priority, issues.Status, issues.Project, members.Email FROM issues, members WHERE issues.Reporter == members.ID AND issues.Project == $1;", projectid)
 	if err != nil {
 		return []Issue{}, err
 	}
@@ -60,7 +60,7 @@ func (Issues) FindByProject(ctx context.Context, projectid int) ([]Issue, error)
 func (Issues) FindByReporter(ctx context.Context, reporter string) ([]Issue, error) {
 	db := databaseFromContext(ctx)
 
-	rows, err := db.Query("SELECT issues.ID, issues.Description, issues.Priority, issues.Status, issues.Project, members.Email FROM issues, members WHERE issues.Reporter == members.ID AND members.Email = ?;", reporter)
+	rows, err := db.Query("SELECT issues.ID, issues.Description, issues.Priority, issues.Status, issues.Project, members.Email FROM issues, members WHERE issues.Reporter == members.ID AND members.Email == $1;", reporter)
 	if err != nil {
 		return []Issue{}, err
 	}
@@ -72,7 +72,7 @@ func (Issues) FindByReporter(ctx context.Context, reporter string) ([]Issue, err
 func (Issues) FindByPriority(ctx context.Context, priority int) ([]Issue, error) {
 	db := databaseFromContext(ctx)
 
-	rows, err := db.Query("SELECT issues.ID, issues.Description, issues.Priority, issues.Status, issues.Project, members.Email FROM issues, members WHERE issues.Reporter == members.ID AND issues.Priority = ?;", priority)
+	rows, err := db.Query("SELECT issues.ID, issues.Description, issues.Priority, issues.Status, issues.Project, members.Email FROM issues, members WHERE issues.Reporter == members.ID AND issues.Priority == $1;", priority)
 	if err != nil {
 		return []Issue{}, err
 	}
@@ -84,7 +84,7 @@ func (Issues) FindByPriority(ctx context.Context, priority int) ([]Issue, error)
 func (Issues) FindByStatus(ctx context.Context, status string) ([]Issue, error) {
 	db := databaseFromContext(ctx)
 
-	rows, err := db.Query("SELECT issues.ID, issues.Description, issues.Priority, issues.Status, issues.Project, members.Email FROM issues, members WHERE issues.Reporter == members.ID AND issues.Status = ?;", status)
+	rows, err := db.Query("SELECT issues.ID, issues.Description, issues.Priority, issues.Status, issues.Project, members.Email FROM issues, members WHERE issues.Reporter == members.ID AND issues.Status == $1;", status)
 	if err != nil {
 		return []Issue{}, err
 	}
