@@ -23,7 +23,7 @@ type Issues struct{}
 func (Issues) FindAll(ctx context.Context) ([]Issue, error) {
 	db := databaseFromContext(ctx)
 
-	rows, err := db.Query("SELECT issues.ID, issues.Description, issues.Priority, issues.Status, issues.Project, members.Email FROM issues, members WHERE issues.Reporter == members.ID;")
+	rows, err := db.Query("SELECT issues.ID, issues.Description, issues.Priority, issues.Status, issues.Project, members.Email FROM issues, members WHERE issues.Reporter == members.ID ORDER BY issues.ID;")
 	if err != nil {
 		return []Issue{}, err
 	}
@@ -48,7 +48,7 @@ func (Issues) FindByID(ctx context.Context, id int) (Issue, error) {
 func (Issues) FindByProject(ctx context.Context, projectid int) ([]Issue, error) {
 	db := databaseFromContext(ctx)
 
-	rows, err := db.Query("SELECT issues.ID, issues.Description, issues.Priority, issues.Status, issues.Project, members.Email FROM issues, members WHERE issues.Reporter == members.ID AND issues.Project == $1;", projectid)
+	rows, err := db.Query("SELECT issues.ID, issues.Description, issues.Priority, issues.Status, issues.Project, members.Email FROM issues, members WHERE issues.Reporter == members.ID AND issues.Project == $1 ORDER BY issues.ID;", projectid)
 	if err != nil {
 		return []Issue{}, err
 	}
@@ -60,7 +60,7 @@ func (Issues) FindByProject(ctx context.Context, projectid int) ([]Issue, error)
 func (Issues) FindByReporter(ctx context.Context, reporter string) ([]Issue, error) {
 	db := databaseFromContext(ctx)
 
-	rows, err := db.Query("SELECT issues.ID, issues.Description, issues.Priority, issues.Status, issues.Project, members.Email FROM issues, members WHERE issues.Reporter == members.ID AND members.Email == $1;", reporter)
+	rows, err := db.Query("SELECT issues.ID, issues.Description, issues.Priority, issues.Status, issues.Project, members.Email FROM issues, members WHERE issues.Reporter == members.ID AND members.Email == $1 ORDER BY issues.ID;", reporter)
 	if err != nil {
 		return []Issue{}, err
 	}
@@ -72,7 +72,7 @@ func (Issues) FindByReporter(ctx context.Context, reporter string) ([]Issue, err
 func (Issues) FindByPriority(ctx context.Context, priority int) ([]Issue, error) {
 	db := databaseFromContext(ctx)
 
-	rows, err := db.Query("SELECT issues.ID, issues.Description, issues.Priority, issues.Status, issues.Project, members.Email FROM issues, members WHERE issues.Reporter == members.ID AND issues.Priority == $1;", priority)
+	rows, err := db.Query("SELECT issues.ID, issues.Description, issues.Priority, issues.Status, issues.Project, members.Email FROM issues, members WHERE issues.Reporter == members.ID AND issues.Priority == $1 ORDER BY issues.ID;", priority)
 	if err != nil {
 		return []Issue{}, err
 	}
