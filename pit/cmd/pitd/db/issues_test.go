@@ -81,18 +81,22 @@ var (
 	findIssuesByPriorityTests = []findIssuesByPriorityTest{
 		{"FindByPriority empty tables", Issues.FindByPriority, 1, emptytables, []Issue{}, nil},
 		{"FindByPriority one issue", Issues.FindByPriority, 1, oneissue, []Issue{issueone}, nil},
+		{"FindByPriority one issue no match", Issues.FindByPriority, 3, oneissue, []Issue{}, nil},
 	}
 	findIssuesByProjectTests = []findIssuesByProjectTest{
 		{"FindByProject empty tables", Issues.FindByProject, 112, emptytables, []Issue{}, nil},
 		{"FindByProject one issue", Issues.FindByProject, 101, oneissue, []Issue{issueone}, nil},
+		{"FindByProject one issue no match", Issues.FindByProject, 112, oneissue, []Issue{}, nil},
 	}
 	findIssuesByReporterTests = []findIssuesByReporterTest{
 		{"FindByReporter empty tables", Issues.FindByReporter, "fred.c.dobbs@sierra.madre", emptytables, []Issue{}, nil},
 		{"FindByReporter one issue", Issues.FindByReporter, "fred@testrock.org", oneissue, []Issue{issueone}, nil},
+		{"FindByReporter one issue no match", Issues.FindByReporter, "betty@testrock.org", oneissue, []Issue{}, nil},
 	}
 	findIssuesByStatusTests = []findIssuesByStatusTest{
 		{"FindByStatus empty tables", Issues.FindByStatus, Closed, emptytables, []Issue{}, nil},
 		{"FindByStatus one issue", Issues.FindByStatus, Open, oneissue, []Issue{issueone}, nil},
+		{"FindByStatus one issue on match", Issues.FindByStatus, Returned, oneissue, []Issue{}, nil},
 	}
 )
 
