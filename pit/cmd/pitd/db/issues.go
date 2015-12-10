@@ -94,12 +94,26 @@ func (Issues) FindByStatus(ctx context.Context, status string) ([]Issue, error) 
 
 // Assigned retrieves a list of project team members who are assigned to the issue.
 func (i Issue) Assigned(ctx context.Context) ([]Member, error) {
-	return []Member{}, nil
+	db := databaseFromContext(ctx)
+
+	rows, err := db.Query("SELECT members.ID, members.Email FROM members FULL JOIN assignments ON (members.ID == assignments.MID) WHERE assignments.IID == $1 ORDER BY members.ID;", i.id)
+	if err != nil {
+		return []Member{}, err
+	}
+
+	return collectMembers(ctx, rows)
 }
 
 // Watching retrieves a list of project team members who are watching the issue.
 func (i Issue) Watching(ctx context.Context) ([]Member, error) {
-	return []Member{}, nil
+	db := databaseFromContext(ctx)
+
+	rows, err := db.Query("SELECT members.ID, members.Email FROM members FULL JOIN watchers ON (members.ID == watchers.MID) WHERE watchers.IID == $1 ORDER BY members.ID;", i.id)
+	if err != nil {
+		return []Member{}, err
+	}
+
+	return collectMembers(ctx, rows)
 }
 
 func collectIssues(ctx context.Context, rows *sql.Rows) ([]Issue, error) {

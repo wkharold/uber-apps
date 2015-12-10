@@ -61,6 +61,14 @@ type findIssuesByStatusTest struct {
 	err         error
 }
 
+type issueTest struct {
+	description string
+	fn          func(context.Context) ([]Member, error)
+	ctxfn       func() context.Context
+	expected    []Member
+	err         error
+}
+
 var (
 	issueone = Issue{
 		id: 2001, description: "issue one", priority: 1, status: Open, project: 101, reporter: "fred@testrock.org",
