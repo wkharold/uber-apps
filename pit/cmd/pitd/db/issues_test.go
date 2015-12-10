@@ -62,26 +62,37 @@ type findIssuesByStatusTest struct {
 }
 
 var (
+	issueone = Issue{
+		id: 2001, description: "issue one", priority: 1, status: Open, project: 101, reporter: "fred@testrock.org",
+	}
+)
+
+var (
 	findAllIssuesTests = []findAllIssuesTest{
 		{"FindAll empty tables", Issues.FindAll, emptytables, []Issue{}, nil},
 		{"FindAll no issues", Issues.FindAll, noissues, []Issue{}, nil},
 		{"FindAll one issue", Issues.FindAll, oneissue, []Issue{issueone}, nil},
-		{"FindAll issues", Issues.FindAll, alltheissues, []Issue{}, nil},
+		{"FindAll issues", Issues.FindAll, alltheissues, []Issue{issueone}, nil},
 	}
 	findIssuesByIDTests = []findIssuesByIDTest{
 		{"FindByID empty tables", Issues.FindByID, 42, emptytables, Issue{}, sql.ErrNoRows},
+		{"FindByID one issue", Issues.FindByID, 2001, oneissue, issueone, nil},
 	}
 	findIssuesByPriorityTests = []findIssuesByPriorityTest{
 		{"FindByPriority empty tables", Issues.FindByPriority, 1, emptytables, []Issue{}, nil},
+		{"FindByPriority one issue", Issues.FindByPriority, 1, oneissue, []Issue{issueone}, nil},
 	}
 	findIssuesByProjectTests = []findIssuesByProjectTest{
 		{"FindByProject empty tables", Issues.FindByProject, 112, emptytables, []Issue{}, nil},
+		{"FindByProject one issue", Issues.FindByProject, 101, oneissue, []Issue{issueone}, nil},
 	}
 	findIssuesByReporterTests = []findIssuesByReporterTest{
 		{"FindByReporter empty tables", Issues.FindByReporter, "fred.c.dobbs@sierra.madre", emptytables, []Issue{}, nil},
+		{"FindByReporter one issue", Issues.FindByReporter, "fred@testrock.org", oneissue, []Issue{issueone}, nil},
 	}
 	findIssuesByStatusTests = []findIssuesByStatusTest{
 		{"FindByStatus empty tables", Issues.FindByStatus, Closed, emptytables, []Issue{}, nil},
+		{"FindByStatus one issue", Issues.FindByStatus, Open, oneissue, []Issue{issueone}, nil},
 	}
 )
 
@@ -200,8 +211,8 @@ func alltheissues() context.Context {
 						  (102, "project two", "second test project", 1001),
 						  (103, "project three", "third test project", 1002),
 						  (104, "project four", "fourth test project", 1001),
-					      (105, "project five", "fifth test project", 1002),
-						  (106, "project six", "sixth test project", 1001;`); err != nil {
+						  (105, "project five", "fifth test project", 1002),
+						  (106, "project six", "sixth test project", 1001);`); err != nil {
 		panic(fmt.Sprintf("cannot setup projects table: [%+v]", err))
 	}
 
@@ -252,7 +263,7 @@ func noissues() context.Context {
 						  (103, "project three", "third test project", 1002),
 						  (104, "project four", "fourth test project", 1001),
 					      (105, "project five", "fifth test project", 1002),
-						  (106, "project six", "sixth test project", 1001;`); err != nil {
+						  (106, "project six", "sixth test project", 1001);`); err != nil {
 		panic(fmt.Sprintf("cannot setup projects table: [%+v]", err))
 	}
 
@@ -298,7 +309,7 @@ func oneissue() context.Context {
 						  (103, "project three", "third test project", 1002),
 						  (104, "project four", "fourth test project", 1001),
 					      (105, "project five", "fifth test project", 1002),
-						  (106, "project six", "sixth test project", 1001;`); err != nil {
+						  (106, "project six", "sixth test project", 1001);`); err != nil {
 		panic(fmt.Sprintf("cannot setup projects table: [%+v]", err))
 	}
 
