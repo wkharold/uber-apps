@@ -84,7 +84,7 @@ func (Issues) FindByPriority(ctx context.Context, priority int) ([]Issue, error)
 func (Issues) FindByStatus(ctx context.Context, status string) ([]Issue, error) {
 	db := databaseFromContext(ctx)
 
-	rows, err := db.Query("SELECT issues.ID, issues.Description, issues.Priority, issues.Status, issues.Project, members.Email FROM issues, members WHERE issues.Reporter == members.ID AND issues.Status == $1;", status)
+	rows, err := db.Query("SELECT issues.ID, issues.Description, issues.Priority, issues.Status, issues.Project, members.Email FROM issues, members WHERE issues.Reporter == members.ID AND issues.Status == $1 ORDER BY issues.ID;", status)
 	if err != nil {
 		return []Issue{}, err
 	}

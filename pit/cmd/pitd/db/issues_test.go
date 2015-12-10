@@ -124,6 +124,9 @@ var (
 		{"FindByStatus empty tables", Issues.FindByStatus, Closed, emptytables, []Issue{}, nil},
 		{"FindByStatus one issue", Issues.FindByStatus, Open, oneissue, []Issue{issueone}, nil},
 		{"FindByStatus one issue on match", Issues.FindByStatus, Returned, oneissue, []Issue{}, nil},
+		{"FindByStatus issues no match", Issues.FindByStatus, "UNKNOWN", alltheissues, []Issue{}, nil},
+		{"FindByStatus issues one match", Issues.FindByStatus, Returned, alltheissues, []Issue{issuefour}, nil},
+		{"FindByStatus issues", Issues.FindByStatus, Closed, alltheissues, []Issue{issuethree, issuesix}, nil},
 	}
 )
 
