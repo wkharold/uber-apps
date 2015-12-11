@@ -18,7 +18,7 @@ type contributorstest struct {
 
 type findAllProjectsTest struct {
 	description string
-	ffn         func(Projects, context.Context) ([]Project, error)
+	fn          func(Projects, context.Context) ([]Project, error)
 	ctxfn       func() context.Context
 	expected    []Project
 	err         error
@@ -26,7 +26,7 @@ type findAllProjectsTest struct {
 
 type findProjectsByOwnerTest struct {
 	description string
-	ffn         func(Projects, context.Context, string) ([]Project, error)
+	fn          func(Projects, context.Context, string) ([]Project, error)
 	owner       string
 	ctxfn       func() context.Context
 	expected    []Project
@@ -35,7 +35,7 @@ type findProjectsByOwnerTest struct {
 
 type findProjectsByIDTest struct {
 	description string
-	ffn         func(Projects, context.Context, int) (Project, error)
+	fn          func(Projects, context.Context, int) (Project, error)
 	id          int
 	ctxfn       func() context.Context
 	expected    Project
@@ -44,7 +44,7 @@ type findProjectsByIDTest struct {
 
 type findProjectsByNameTest struct {
 	description string
-	ffn         func(Projects, context.Context, string) (Project, error)
+	fn          func(Projects, context.Context, string) (Project, error)
 	name        string
 	ctxfn       func() context.Context
 	expected    Project
@@ -121,7 +121,7 @@ func TestFindAllProjects(t *testing.T) {
 		ctx := nt.ctxfn()
 		db := ctx.Value("database").(*sql.DB)
 
-		ps, err := nt.ffn(struct{}{}, ctx)
+		ps, err := nt.fn(struct{}{}, ctx)
 		if err != nil {
 			t.Errorf("%s: unexpected error [%+v]", nt.description, err)
 			dropdb(db)
@@ -143,7 +143,7 @@ func TestFindProjectsByOwner(t *testing.T) {
 		ctx := nt.ctxfn()
 		db := ctx.Value("database").(*sql.DB)
 
-		ps, err := nt.ffn(struct{}{}, ctx, nt.owner)
+		ps, err := nt.fn(struct{}{}, ctx, nt.owner)
 		if err != nil {
 			t.Errorf("%s: unexpected error [%+v]", nt.description, err)
 			dropdb(db)
@@ -165,7 +165,7 @@ func TestFindProjectsByID(t *testing.T) {
 		ctx := nt.ctxfn()
 		db := ctx.Value("database").(*sql.DB)
 
-		p, err := nt.ffn(struct{}{}, ctx, nt.id)
+		p, err := nt.fn(struct{}{}, ctx, nt.id)
 		switch {
 		case err != nil && err != nt.err:
 			t.Errorf("%s: unexpected error [%+v]", nt.description, err)
@@ -187,7 +187,7 @@ func TestFindProjectsByName(t *testing.T) {
 		ctx := nt.ctxfn()
 		db := ctx.Value("database").(*sql.DB)
 
-		p, err := nt.ffn(struct{}{}, ctx, nt.name)
+		p, err := nt.fn(struct{}{}, ctx, nt.name)
 		switch {
 		case err != nil && err != nt.err:
 			t.Errorf("%s: unexpected error [%+v]", nt.description, err)
