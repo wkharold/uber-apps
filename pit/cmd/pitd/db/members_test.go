@@ -42,6 +42,14 @@ type findMembersByIDTest struct {
 	err         error
 }
 
+type memberIssuesTest struct {
+	description string
+	fn          func(context.Context) ([]Issue, error)
+	ctxfn       func() context.Context
+	expected    []Issue
+	err         error
+}
+
 var (
 	bob   = Member{id: 1003, email: "bob@members.com"}
 	carol = Member{id: 1004, email: "carol@members.com"}
@@ -50,6 +58,11 @@ var (
 )
 
 var (
+	assignmentsTests = []memberIssuesTest{
+		{"Assignments empty tables", bob.Assignments, emptytables, []Issue{}, nil},
+		{"Assignments one issue", bob.Assignments, alltheissues, []Issue{issuetwo}, nil},
+		{"Assignments", carol.Assignments, alltheissues, []Issue{issuefive, issuesix}, nil},
+	}
 	contributesToTests = []contributesToTest{
 		{"ContributesTo no contributions", bob.ContributesTo, contributions, []Project{}, nil},
 		{"ContributesTo one project", carol.ContributesTo, contributions, []Project{pone}, nil},
@@ -72,7 +85,34 @@ var (
 		{"FindByID one member", Members.FindByID, 1003, onemember, bob, nil},
 		{"FindByID members", Members.FindByID, 1005, manymembers, ted, nil},
 	}
+	watchingTests = []memberIssuesTest{
+		{"Watching empty tables", bob.Watching, emptytables, []Issue{}, nil},
+		{"Watching one issue", alice.Watching, alltheissues, []Issue{issuefive}, nil},
+		{"Watching", bob.Watching, alltheissues, []Issue{issuetwo, issuethree, issuesix}, nil},
+	}
 )
+
+func TestMemberAssignments(t *testing.T) {
+	for _, nt := range assignmentsTests {
+		ctx := nt.ctxfn()
+		db := ctx.Value("database").(*sql.DB)
+
+		is, err := nt.fn(ctx)
+		switch {
+		case err != nil && err != nt.err:
+			t.Errorf("%s: unexpected error [%+v]", nt.description, err)
+		case err != nil && err == nt.err:
+			break
+		default:
+			if !sameissues(is, nt.expected) {
+				t.Errorf("%s: got %+v, expected %+v", nt.description, is, nt.expected)
+				break
+			}
+		}
+
+		dropdb(db)
+	}
+}
 
 func TestMemberContributesTo(t *testing.T) {
 	for _, nt := range contributesToTests {

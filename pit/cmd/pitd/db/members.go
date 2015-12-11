@@ -55,7 +55,23 @@ func (Members) FindByID(ctx context.Context, memberid int) (Member, error) {
 
 // Assignments retrieves a list of all the issues to which the proejct team member has been assigned.
 func (m Member) Assignments(ctx context.Context) ([]Issue, error) {
-	return []Issue{}, nil
+	db := databaseFromContext(ctx)
+
+	rows, err := db.Query(`
+	SELECT I.IID, I.Description, I.Priority, I.Status, I.Project, I.Reporter
+	FROM (SELECT issues.ID AS IID, issues.Description AS Description, issues.Priority AS Priority, issues.Status AS Status, issues.Project AS Project, members.Email AS Reporter
+	      FROM issues, members
+		  WHERE issues.Reporter == members.ID
+		  ORDER BY IID) AS I
+	FULL JOIN assignments ON (I.IID == assignments.IID)
+    WHERE assignments.MID == $1
+	ORDER BY I.IID
+	`, m.id)
+	if err != nil {
+		return []Issue{}, err
+	}
+
+	return collectIssues(ctx, rows)
 }
 
 // ContributesTo retrieves a list of all the projects to which the project team member contributes.
@@ -68,7 +84,7 @@ func (m Member) ContributesTo(ctx context.Context) ([]Project, error) {
 		  FROM projects, members
 		  WHERE projects.Owner == members.ID
 		  ORDER BY PID) AS P
-		 FULL JOIN contributors ON (P.PID == contributors.PID)
+	FULL JOIN contributors ON (P.PID == contributors.PID)
 	WHERE contributors.MID == $1
 	ORDER BY P.PID
 	`, m.id)

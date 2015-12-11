@@ -136,6 +136,18 @@ var (
 		{"FindByStatus issues one match", Issues.FindByStatus, Returned, alltheissues, []Issue{issuefour}, nil},
 		{"FindByStatus issues", Issues.FindByStatus, Closed, alltheissues, []Issue{issuethree, issuesix}, nil},
 	}
+	issueAssignedTests = []issueTest{
+		{"Assigned empty tables", issueone.Assigned, emptytables, []Member{}, nil},
+		{"Assigned no assignement", issueone.Assigned, alltheissues, []Member{}, nil},
+		{"Assigned one assignement", issuetwo.Assigned, alltheissues, []Member{bob}, nil},
+		{"Assigned", issuesix.Assigned, alltheissues, []Member{carol, ted, alice}, nil},
+	}
+	issueWatchingTests = []issueTest{
+		{"Watching empty tables", issueone.Watching, emptytables, []Member{}, nil},
+		{"Watching no watchers", issuefour.Watching, alltheissues, []Member{}, nil},
+		{"Watching one watcher", issuefive.Watching, alltheissues, []Member{alice}, nil},
+		{"Watching", issuethree.Watching, alltheissues, []Member{bob, carol, ted, alice}, nil},
+	}
 )
 
 func TestFindAllIssues(t *testing.T) {
@@ -255,6 +267,50 @@ func TestFindIssuesByStatus(t *testing.T) {
 	}
 }
 
+func TestIssueAssigned(t *testing.T) {
+	for _, nt := range issueAssignedTests {
+		ctx := nt.ctxfn()
+		db := ctx.Value("database").(*sql.DB)
+
+		ps, err := nt.fn(ctx)
+		switch {
+		case err != nil && err != nt.err:
+			t.Errorf("%s: unexpected error [%+v]", nt.description, err)
+		case err != nil && err == nt.err:
+			break
+		default:
+			if !samemembers(ps, nt.expected) {
+				t.Errorf("%s: got %+v, expected %+v", nt.description, ps, nt.expected)
+				break
+			}
+		}
+
+		dropdb(db)
+	}
+}
+
+func TestIssueWatching(t *testing.T) {
+	for _, nt := range issueWatchingTests {
+		ctx := nt.ctxfn()
+		db := ctx.Value("database").(*sql.DB)
+
+		ps, err := nt.fn(ctx)
+		switch {
+		case err != nil && err != nt.err:
+			t.Errorf("%s: unexpected error [%+v]", nt.description, err)
+		case err != nil && err == nt.err:
+			break
+		default:
+			if !samemembers(ps, nt.expected) {
+				t.Errorf("%s: got %+v, expected %+v", nt.description, ps, nt.expected)
+				break
+			}
+		}
+
+		dropdb(db)
+	}
+}
+
 func alltheissues() context.Context {
 	db := createdb("alltheissues")
 
@@ -305,6 +361,26 @@ func alltheissues() context.Context {
 						  (2005, "issue five", 2, "OPEN", 103, 1007),
 						  (2006, "issue six", 4, "CLOSED", 106, 1009);`); err != nil {
 		panic(fmt.Sprintf("cannot setup issues table: [%+v]", err))
+	}
+
+	if _, err := tx.Exec(`INSERT INTO assignments VALUES
+	                      (1003, 2002),
+						  (1004, 2005),
+						  (1004, 2006),
+						  (1005, 2006),
+						  (1006, 2006);`); err != nil {
+		panic(fmt.Sprintf("cannot setup assignments table: [%+v]", err))
+	}
+
+	if _, err := tx.Exec(`INSERT INTO watchers VALUES
+	                      (1006, 2005),
+	                      (1003, 2002),
+						  (1003, 2003),
+						  (1003, 2006),
+	                      (1004, 2003),
+	                      (1005, 2003),
+	                      (1006, 2003);`); err != nil {
+		panic(fmt.Sprintf("cannot setup watchers table: [%+v]", err))
 	}
 
 	tx.Commit()
