@@ -22,7 +22,23 @@ type Members struct{}
 
 // NewMember creates a new member associated with the specified email address.
 func NewMember(ctx context.Context, email string) (Member, error) {
-	return Member{}, ErrMemberExists
+	db := databaseFromContext(ctx)
+	ids := idsChanFromContext(ctx)
+	id := <-ids
+
+	tx, err := db.Begin()
+	if err != nil {
+		return Member{}, err
+	}
+
+	_, err = tx.Exec("INSERT INTO members VALUES ($1, $2)", id, email)
+	if err != nil {
+		return Member{}, err
+	}
+
+	tx.Commit()
+
+	return Member{id, email}, nil
 }
 
 // FindAll retreives a list of all the project team members in the repository.

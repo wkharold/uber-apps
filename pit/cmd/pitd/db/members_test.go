@@ -97,7 +97,7 @@ var (
 	}
 	newMemberTests = []newMemberTest{
 		{"NewMember empty tables", NewMember, "bob@members.com", 1003, emptytables, bob, nil},
-		{"NewMember", NewMember, "bob@members.com", 1003, manymembers, Member{}, nil},
+		{"NewMember", NewMember, "carol@members.com", 1004, manymembers, carol, nil},
 	}
 	watchingTests = []memberIssuesTest{
 		{"Watching empty tables", bob.Watching, emptytables, []Issue{}, nil},
