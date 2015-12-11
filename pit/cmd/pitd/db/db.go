@@ -18,7 +18,7 @@ const (
 
 var (
 	qldb *sql.DB
-	IDs  chan<- int
+	IDs  chan int
 )
 
 func init() {
@@ -39,11 +39,19 @@ func init() {
 }
 
 func databaseFromContext(ctx context.Context) *sql.DB {
-	result := ctx.Value("database").(*sql.DB)
-	if result != nil {
+	result, ok := ctx.Value("database").(*sql.DB)
+	if ok {
 		return result
 	}
 	return qldb
+}
+
+func idsChanFromContext(ctx context.Context) chan int {
+	result, ok := ctx.Value("ids-chan").(chan int)
+	if ok {
+		return result
+	}
+	return IDs
 }
 
 func mkTables(db *sql.DB) error {
@@ -157,6 +165,7 @@ func emptytables() context.Context {
 
 	ctx := context.Background()
 	ctx = context.WithValue(ctx, "database", db)
+	ctx = context.WithValue(ctx, "ids-chan", make(chan int))
 
 	return ctx
 }

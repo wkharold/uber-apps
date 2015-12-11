@@ -238,6 +238,32 @@ func TestFindMembersByID(t *testing.T) {
 	}
 }
 
+func TestNewMembers(t *testing.T) {
+	for _, nt := range newMemberTests {
+		ctx := nt.ctxfn()
+		db := ctx.Value("database").(*sql.DB)
+		ids := ctx.Value("ids-chan").(chan int)
+
+		go func() {
+			ids <- nt.id
+		}()
+
+		m, err := nt.fn(ctx, nt.email)
+		switch {
+		case err != nil && err != nt.err:
+			t.Errorf("%s: unexpected error [%+v]", nt.description, err)
+		case err != nil:
+			break
+		default:
+			if m != nt.expected {
+				t.Errorf("%s: expected %+v, got %+v", nt.description, nt.expected, m)
+				break
+			}
+		}
+
+		dropdb(db)
+	}
+}
 func contributions() context.Context {
 	db := createdb("contributions")
 
@@ -303,6 +329,7 @@ func manymembers() context.Context {
 
 	ctx := context.Background()
 	ctx = context.WithValue(ctx, "database", db)
+	ctx = context.WithValue(ctx, "ids-chan", make(chan int))
 
 	tx, err := db.Begin()
 	if err != nil {
