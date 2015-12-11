@@ -136,6 +136,28 @@ func TestMemberContributesTo(t *testing.T) {
 	}
 }
 
+func TestMemberWatching(t *testing.T) {
+	for _, nt := range watchingTests {
+		ctx := nt.ctxfn()
+		db := ctx.Value("database").(*sql.DB)
+
+		is, err := nt.fn(ctx)
+		switch {
+		case err != nil && err != nt.err:
+			t.Errorf("%s: unexpected error [%+v]", nt.description, err)
+		case err != nil && err == nt.err:
+			break
+		default:
+			if !sameissues(is, nt.expected) {
+				t.Errorf("%s: got %+v, expected %+v", nt.description, is, nt.expected)
+				break
+			}
+		}
+
+		dropdb(db)
+	}
+}
+
 func TestFindAllMembers(t *testing.T) {
 	for _, nt := range findAllMemberTests {
 		ctx := nt.ctxfn()

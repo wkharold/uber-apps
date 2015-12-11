@@ -146,7 +146,7 @@ var (
 		{"Watching empty tables", issueone.Watching, emptytables, []Member{}, nil},
 		{"Watching no watchers", issuefour.Watching, alltheissues, []Member{}, nil},
 		{"Watching one watcher", issuefive.Watching, alltheissues, []Member{alice}, nil},
-		{"Watching", issuethree.Watching, alltheissues, []Member{bob, carol, ted, alice}, nil},
+		{"Watching", issuethree.Watching, alltheissues, []Member{bob, carol, ted}, nil},
 	}
 )
 
@@ -378,8 +378,7 @@ func alltheissues() context.Context {
 						  (1003, 2003),
 						  (1003, 2006),
 	                      (1004, 2003),
-	                      (1005, 2003),
-	                      (1006, 2003);`); err != nil {
+						  (1005, 2003);`); err != nil {
 		panic(fmt.Sprintf("cannot setup watchers table: [%+v]", err))
 	}
 
