@@ -50,6 +50,16 @@ type memberIssuesTest struct {
 	err         error
 }
 
+type newMemberTest struct {
+	description string
+	fn          func(context.Context, string) (Member, error)
+	email       string
+	id          int
+	ctxfn       func() context.Context
+	expected    Member
+	err         error
+}
+
 var (
 	bob   = Member{id: 1003, email: "bob@members.com"}
 	carol = Member{id: 1004, email: "carol@members.com"}
@@ -84,6 +94,10 @@ var (
 		{"FindByID many members no match", Members.FindByID, 2001, manymembers, Member{}, sql.ErrNoRows},
 		{"FindByID one member", Members.FindByID, 1003, onemember, bob, nil},
 		{"FindByID members", Members.FindByID, 1005, manymembers, ted, nil},
+	}
+	newMemberTests = []newMemberTest{
+		{"NewMember empty tables", NewMember, "bob@members.com", 1003, emptytables, bob, nil},
+		{"NewMember", NewMember, "bob@members.com", 1003, manymembers, Member{}, nil},
 	}
 	watchingTests = []memberIssuesTest{
 		{"Watching empty tables", bob.Watching, emptytables, []Issue{}, nil},

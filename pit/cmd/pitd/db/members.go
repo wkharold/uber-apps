@@ -2,8 +2,13 @@ package db
 
 import (
 	"database/sql"
+	"errors"
 
 	"golang.org/x/net/context"
+)
+
+var (
+	ErrMemberExists = errors.New("Member already exists")
 )
 
 // Member is a member of a project team.
@@ -14,6 +19,11 @@ type Member struct {
 
 // Members is the collection of all the project team members known to the PIT system.
 type Members struct{}
+
+// NewMember creates a new member associated with the specified email address.
+func NewMember(ctx context.Context, email string) (Member, error) {
+	return Member{}, ErrMemberExists
+}
 
 // FindAll retreives a list of all the project team members in the repository.
 func (Members) FindAll(ctx context.Context) ([]Member, error) {
