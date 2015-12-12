@@ -51,6 +51,19 @@ type findProjectsByNameTest struct {
 	err         error
 }
 
+type newProjectTest struct {
+	description string
+	fn          func(context.Context, string, string, string) (Project, error)
+	name        string
+	desc        string
+	owner       string
+	id          int
+	ctxfn       func() context.Context
+	expected    Project
+	collection  []Project
+	err         error
+}
+
 var (
 	pone = Project{
 		id: 101, name: "project one", description: "first test project", owner: "owner@test.net",
@@ -61,11 +74,21 @@ var (
 	pthree = Project{
 		id: 103, name: "project three", description: "third test project", owner: "owner@test.io",
 	}
+	pfour = Project{
+		id: 104, name: "project four", description: "fourth test project", owner: "owner@test.net",
+	}
 
 	contributorstests = []contributorstest{
 		{"Contributors no contributors", pone.Contributors, contributors, []Member{}, nil},
 		{"Contributors single contributor", ptwo.Contributors, contributors, []Member{alice}, nil},
 		{"Contributors multiple", pthree.Contributors, contributors, []Member{carol, ted, alice}, nil},
+	}
+	newProjectTests = []newProjectTest{
+		{"NewProject no projects", NewProject, "project one", "first test project", "owner@test.net", 101, noprojects, pone, []Project{pone}, nil},
+		{"NewProject no such owner", NewProject, "project bogus", "bogus test project", "unknown@bogus.io", 999, noprojects, Project{}, []Project{}, ErrNoSuchOwner},
+		{"NewProject project exists", NewProject, "project one", "first test project", "owner@test.net", 101, oneproject, Project{}, []Project{pone}, ErrProjectExists},
+		{"NewProject one project", NewProject, "project three", "third test project", "owner@test.io", 103, oneproject, pthree, []Project{pone, pthree}, nil},
+		{"NewProject", NewProject, "project four", "fourth test project", "owner@test.net", 104, manyprojects, pfour, []Project{pone, ptwo, pthree, pfour}, nil},
 	}
 	findAllProjectsTests = []findAllProjectsTest{
 		{"FindAll from empty tables", Projects.FindAll, emptytables, []Project{}, nil},
@@ -204,6 +227,46 @@ func TestFindProjectsByName(t *testing.T) {
 	}
 }
 
+func TestNewProject(t *testing.T) {
+	for _, nt := range newProjectTests {
+		ctx := nt.ctxfn()
+		db := ctx.Value("database").(*sql.DB)
+		ids := ctx.Value("ids-chan").(chan int)
+
+		go func() {
+			ids <- nt.id
+		}()
+
+		p, err := nt.fn(ctx, nt.name, nt.desc, nt.owner)
+		switch {
+		case err != nil && err != nt.err:
+			t.Errorf("%s: unexpected error [%+v]", nt.description, err)
+		case err != nil:
+			break
+		default:
+			var projects Projects
+
+			if p != nt.expected {
+				t.Errorf("%s: expected %+v, got %+v", nt.description, nt.expected, p)
+				break
+			}
+
+			ps, err := projects.FindAll(ctx)
+			if err != nil {
+				t.Errorf("%s: unexpected verification error [%+v]", nt.description, err)
+				break
+			}
+
+			if !sameprojects(ps, nt.collection) {
+				t.Errorf("%s: expected %+v, got %+v", nt.description, nt.collection, ps)
+				break
+			}
+		}
+
+		dropdb(db)
+	}
+}
+
 func contributors() context.Context {
 	db := createdb("contributors")
 
@@ -250,6 +313,7 @@ func manyprojects() context.Context {
 
 	ctx := context.Background()
 	ctx = context.WithValue(ctx, "database", db)
+	ctx = context.WithValue(ctx, "ids-chan", make(chan int))
 
 	tx, err := db.Begin()
 	if err != nil {
@@ -274,11 +338,32 @@ func manyprojects() context.Context {
 	return ctx
 }
 
+func noprojects() context.Context {
+	db := createdb("oneproject")
+
+	ctx := context.Background()
+	ctx = context.WithValue(ctx, "database", db)
+	ctx = context.WithValue(ctx, "ids-chan", make(chan int))
+
+	tx, err := db.Begin()
+	if err != nil {
+		panic(fmt.Sprintf("cannot create a transaction to setup the database: [%+v]", err))
+	}
+
+	if _, err := tx.Exec(`INSERT INTO members VALUES (1001, "owner@test.net");`); err != nil {
+		panic(fmt.Sprintf("cannot setup members table: [%+v]", err))
+	}
+
+	tx.Commit()
+
+	return ctx
+}
 func oneproject() context.Context {
 	db := createdb("oneproject")
 
 	ctx := context.Background()
 	ctx = context.WithValue(ctx, "database", db)
+	ctx = context.WithValue(ctx, "ids-chan", make(chan int))
 
 	tx, err := db.Begin()
 	if err != nil {
@@ -289,7 +374,7 @@ func oneproject() context.Context {
 		panic(fmt.Sprintf("cannot setup projects table: [%+v]", err))
 	}
 
-	if _, err := tx.Exec(`INSERT INTO members VALUES (1001, "owner@test.net");`); err != nil {
+	if _, err := tx.Exec(`INSERT INTO members VALUES (1001, "owner@test.net"), (1002, "owner@test.io");`); err != nil {
 		panic(fmt.Sprintf("cannot setup members table: [%+v]", err))
 	}
 

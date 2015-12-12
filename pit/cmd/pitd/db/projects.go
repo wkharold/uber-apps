@@ -2,8 +2,14 @@ package db
 
 import (
 	"database/sql"
+	"errors"
 
 	"golang.org/x/net/context"
+)
+
+var (
+	ErrNoSuchOwner   = errors.New("No such owner")
+	ErrProjectExists = errors.New("Project exists")
 )
 
 // Project is a project managed by the PIT system and owned by a specific member of the project team.
@@ -16,6 +22,50 @@ type Project struct {
 
 // Projects is the collection of all the projects managed by the PIT system.
 type Projects struct{}
+
+// NewProject creates a new project with the specified name, description, and owner
+func NewProject(ctx context.Context, name, description, owner string) (Project, error) {
+	db := databaseFromContext(ctx)
+	ids := idsChanFromContext(ctx)
+	id := <-ids
+
+	created := false
+
+	tx, err := db.Begin()
+	if err != nil {
+		return Project{}, err
+	}
+	defer func() {
+		switch created {
+		case true:
+			tx.Commit()
+		case false:
+			tx.Rollback()
+		}
+	}()
+
+	var memail, pname string
+	var mid int
+
+	err = tx.QueryRow("SELECT ID, Email FROM members WHERE Email == $1", owner).Scan(&mid, &memail)
+	if err != nil {
+		return Project{}, ErrNoSuchOwner
+	}
+
+	err = tx.QueryRow("SELECT Name FROM projects WHERE Name == $1", name).Scan(&pname)
+	if err != sql.ErrNoRows {
+		return Project{}, ErrProjectExists
+	}
+
+	_, err = tx.Exec("INSERT INTO projects VALUES ($1, $2, $3, $4)", id, name, description, mid)
+	if err != nil {
+		return Project{}, err
+	}
+
+	created = true
+
+	return Project{id: id, name: name, description: description, owner: owner}, nil
+}
 
 // FindAll retrieves a list of all the projects in the repository.
 func (Projects) FindAll(ctx context.Context) ([]Project, error) {
