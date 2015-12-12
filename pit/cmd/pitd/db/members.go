@@ -31,8 +31,18 @@ func NewMember(ctx context.Context, email string) (Member, error) {
 		return Member{}, err
 	}
 
+	var memail string
+	var mid int
+
+	err = tx.QueryRow("SELECT ID, Email FROM members WHERE Email == $1", email).Scan(&mid, &memail)
+	if err != sql.ErrNoRows {
+		tx.Rollback()
+		return Member{}, ErrMemberExists
+	}
+
 	_, err = tx.Exec("INSERT INTO members VALUES ($1, $2)", id, email)
 	if err != nil {
+		tx.Rollback()
 		return Member{}, err
 	}
 

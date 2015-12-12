@@ -56,7 +56,7 @@ type newMemberTest struct {
 	email       string
 	id          int
 	ctxfn       func() context.Context
-	expected    Member
+	expected    []Member
 	err         error
 }
 
@@ -96,8 +96,9 @@ var (
 		{"FindByID members", Members.FindByID, 1005, manymembers, ted, nil},
 	}
 	newMemberTests = []newMemberTest{
-		{"NewMember empty tables", NewMember, "bob@members.com", 1003, emptytables, bob, nil},
-		{"NewMember", NewMember, "carol@members.com", 1004, manymembers, carol, nil},
+		{"NewMember empty tables", NewMember, "bob@members.com", 1003, emptytables, []Member{bob}, nil},
+		{"NewMember member exists", NewMember, "bob@members.com", 1003, onemember, []Member{}, ErrMemberExists},
+		{"NewMember", NewMember, "alice@members.com", 1006, onemember, []Member{bob, alice}, nil},
 	}
 	watchingTests = []memberIssuesTest{
 		{"Watching empty tables", bob.Watching, emptytables, []Issue{}, nil},
@@ -248,15 +249,22 @@ func TestNewMembers(t *testing.T) {
 			ids <- nt.id
 		}()
 
-		m, err := nt.fn(ctx, nt.email)
+		_, err := nt.fn(ctx, nt.email)
 		switch {
 		case err != nil && err != nt.err:
 			t.Errorf("%s: unexpected error [%+v]", nt.description, err)
 		case err != nil:
 			break
 		default:
-			if m != nt.expected {
-				t.Errorf("%s: expected %+v, got %+v", nt.description, nt.expected, m)
+			var members Members
+
+			ms, err := members.FindAll(ctx)
+			if err != nil {
+				t.Errorf("%s: unexpected verification error [%+v]", nt.description, err)
+			}
+
+			if !samemembers(ms, nt.expected) {
+				t.Errorf("%s: expected %+v, got %+v", nt.description, nt.expected, ms)
 				break
 			}
 		}
@@ -309,6 +317,7 @@ func onemember() context.Context {
 
 	ctx := context.Background()
 	ctx = context.WithValue(ctx, "database", db)
+	ctx = context.WithValue(ctx, "ids-chan", make(chan int))
 
 	tx, err := db.Begin()
 	if err != nil {
