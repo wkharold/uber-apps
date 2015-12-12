@@ -56,7 +56,8 @@ type newMemberTest struct {
 	email       string
 	id          int
 	ctxfn       func() context.Context
-	expected    []Member
+	expected    Member
+	collection  []Member
 	err         error
 }
 
@@ -96,9 +97,9 @@ var (
 		{"FindByID members", Members.FindByID, 1005, manymembers, ted, nil},
 	}
 	newMemberTests = []newMemberTest{
-		{"NewMember empty tables", NewMember, "bob@members.com", 1003, emptytables, []Member{bob}, nil},
-		{"NewMember member exists", NewMember, "bob@members.com", 1003, onemember, []Member{}, ErrMemberExists},
-		{"NewMember", NewMember, "alice@members.com", 1006, onemember, []Member{bob, alice}, nil},
+		{"NewMember empty tables", NewMember, "bob@members.com", 1003, emptytables, bob, []Member{bob}, nil},
+		{"NewMember member exists", NewMember, "bob@members.com", 1003, onemember, Member{}, []Member{}, ErrMemberExists},
+		{"NewMember", NewMember, "alice@members.com", 1006, onemember, alice, []Member{bob, alice}, nil},
 	}
 	watchingTests = []memberIssuesTest{
 		{"Watching empty tables", bob.Watching, emptytables, []Issue{}, nil},
@@ -249,7 +250,7 @@ func TestNewMembers(t *testing.T) {
 			ids <- nt.id
 		}()
 
-		_, err := nt.fn(ctx, nt.email)
+		m, err := nt.fn(ctx, nt.email)
 		switch {
 		case err != nil && err != nt.err:
 			t.Errorf("%s: unexpected error [%+v]", nt.description, err)
@@ -258,13 +259,19 @@ func TestNewMembers(t *testing.T) {
 		default:
 			var members Members
 
+			if m != nt.expected {
+				t.Errorf("%s: expected %+v, got %+v", nt.description, nt.expected, m)
+				break
+			}
+
 			ms, err := members.FindAll(ctx)
 			if err != nil {
 				t.Errorf("%s: unexpected verification error [%+v]", nt.description, err)
+				break
 			}
 
-			if !samemembers(ms, nt.expected) {
-				t.Errorf("%s: expected %+v, got %+v", nt.description, nt.expected, ms)
+			if !samemembers(ms, nt.collection) {
+				t.Errorf("%s: expected %+v, got %+v", nt.description, nt.collection, ms)
 				break
 			}
 		}
@@ -272,6 +279,7 @@ func TestNewMembers(t *testing.T) {
 		dropdb(db)
 	}
 }
+
 func contributions() context.Context {
 	db := createdb("contributions")
 
