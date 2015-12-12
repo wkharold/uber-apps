@@ -71,22 +71,22 @@ type issueTest struct {
 
 var (
 	issueone = Issue{
-		id: 2001, description: "issue one", priority: 1, status: Open, project: 101, reporter: "fred@testrock.org",
+		id: 2001, name: "issueone", description: "issue one", priority: 1, status: Open, project: 101, reporter: "fred@testrock.org",
 	}
 	issuetwo = Issue{
-		id: 2002, description: "issue two", priority: 2, status: Open, project: 102, reporter: "barney@testrock.org",
+		id: 2002, name: "issuetwo", description: "issue two", priority: 2, status: Open, project: 102, reporter: "barney@testrock.org",
 	}
 	issuethree = Issue{
-		id: 2003, description: "issue three", priority: 2, status: Closed, project: 102, reporter: "barney@testrock.org",
+		id: 2003, name: "issuethree", description: "issue three", priority: 2, status: Closed, project: 102, reporter: "barney@testrock.org",
 	}
 	issuefour = Issue{
-		id: 2004, description: "issue four", priority: 3, status: Returned, project: 104, reporter: "fred@testrock.org",
+		id: 2004, name: "issuefour", description: "issue four", priority: 3, status: Returned, project: 104, reporter: "fred@testrock.org",
 	}
 	issuefive = Issue{
-		id: 2005, description: "issue five", priority: 2, status: Open, project: 103, reporter: "fred@testrock.org",
+		id: 2005, name: "issuefive", description: "issue five", priority: 2, status: Open, project: 103, reporter: "fred@testrock.org",
 	}
 	issuesix = Issue{
-		id: 2006, description: "issue six", priority: 4, status: Closed, project: 106, reporter: "wilma@testrock.org",
+		id: 2006, name: "issuesix", description: "issue six", priority: 4, status: Closed, project: 106, reporter: "wilma@testrock.org",
 	}
 )
 
@@ -354,12 +354,12 @@ func alltheissues() context.Context {
 	}
 
 	if _, err := tx.Exec(`INSERT INTO issues VALUES
-	                      (2001, "issue one", 1, "OPEN", 101, 1007),
-						  (2002, "issue two", 2, "OPEN", 102, 1008),
-						  (2003, "issue three", 2, "CLOSED", 102, 1008),
-						  (2004, "issue four", 3, "RETURNED", 104, 1007),
-						  (2005, "issue five", 2, "OPEN", 103, 1007),
-						  (2006, "issue six", 4, "CLOSED", 106, 1009);`); err != nil {
+	                      (2001, "issueone", "issue one", 1, "OPEN", 101, 1007),
+						  (2002, "issuetwo", "issue two", 2, "OPEN", 102, 1008),
+						  (2003, "issuethree", "issue three", 2, "CLOSED", 102, 1008),
+						  (2004, "issuefour", "issue four", 3, "RETURNED", 104, 1007),
+						  (2005, "issuefive", "issue five", 2, "OPEN", 103, 1007),
+						  (2006, "issuesix", "issue six", 4, "CLOSED", 106, 1009);`); err != nil {
 		panic(fmt.Sprintf("cannot setup issues table: [%+v]", err))
 	}
 
@@ -475,7 +475,7 @@ func oneissue() context.Context {
 	}
 
 	if _, err := tx.Exec(`INSERT INTO issues VALUES
-	                      (2001, "issue one", 1, "OPEN", 101, 1007);`); err != nil {
+	                      (2001, "issueone", "issue one", 1, "OPEN", 101, 1007);`); err != nil {
 		panic(fmt.Sprintf("cannot setup issues table: [%+v]", err))
 	}
 

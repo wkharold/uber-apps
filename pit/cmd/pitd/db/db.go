@@ -66,7 +66,7 @@ func mkTables(db *sql.DB) error {
 		return err
 	}
 
-	if _, err = tx.Exec("CREATE TABLE issues (ID int, Description string, Priority int, Status string, Project int, Reporter int);"); err != nil {
+	if _, err = tx.Exec("CREATE TABLE issues (ID int, Name string,  Description string, Priority int, Status string, Project int, Reporter int);"); err != nil {
 		tx.Rollback()
 		return err
 	}
