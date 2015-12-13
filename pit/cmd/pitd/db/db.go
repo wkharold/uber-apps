@@ -3,6 +3,7 @@ package db
 
 import (
 	"database/sql"
+	"errors"
 	"fmt"
 
 	"golang.org/x/net/context"
@@ -14,6 +15,14 @@ const (
 	Closed   = "CLOSED"
 	Open     = "OPEN"
 	Returned = "RETURNED"
+)
+
+var (
+	ErrIssueExists   = errors.New("Issue already exists")
+	ErrMemberExists  = errors.New("Member already exists")
+	ErrNoSuchMember  = errors.New("No such member")
+	ErrNoSuchOwner   = errors.New("No such owner")
+	ErrProjectExists = errors.New("Project exists")
 )
 
 var (

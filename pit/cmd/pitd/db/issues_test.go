@@ -88,6 +88,9 @@ var (
 	issuesix = Issue{
 		id: 2006, name: "issuesix", description: "issue six", priority: 4, status: Closed, project: 106, reporter: "wilma@testrock.org",
 	}
+	issueseven = Issue{
+		id: 2007, name: "issueseven", description: "issue seven", priority: 2, status: Open, project: 102, reporter: "barney@testrock.org",
+	}
 )
 
 var (

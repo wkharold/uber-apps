@@ -2,13 +2,8 @@ package db
 
 import (
 	"database/sql"
-	"errors"
 
 	"golang.org/x/net/context"
-)
-
-var (
-	ErrMemberExists = errors.New("Member already exists")
 )
 
 // Member is a member of a project team.

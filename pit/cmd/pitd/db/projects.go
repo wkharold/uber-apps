@@ -2,14 +2,8 @@ package db
 
 import (
 	"database/sql"
-	"errors"
 
 	"golang.org/x/net/context"
-)
-
-var (
-	ErrNoSuchOwner   = errors.New("No such owner")
-	ErrProjectExists = errors.New("Project exists")
 )
 
 // Project is a project managed by the PIT system and owned by a specific member of the project team.
@@ -127,6 +121,50 @@ func (p Project) Contributors(ctx context.Context) ([]Member, error) {
 	}
 
 	return collectMembers(ctx, rows)
+}
+
+// OpenIssue creates a new issue associated with this project.
+func (p Project) OpenIssue(ctx context.Context, name, description, reporter string, priority int) (Issue, error) {
+	db := databaseFromContext(ctx)
+	ids := idsChanFromContext(ctx)
+	id := <-ids
+
+	created := false
+
+	tx, err := db.Begin()
+	if err != nil {
+		return Issue{}, err
+	}
+	defer func() {
+		switch created {
+		case true:
+			tx.Commit()
+		case false:
+			tx.Rollback()
+		}
+	}()
+
+	var iname, memail string
+	var mid int
+
+	err = tx.QueryRow("SELECT ID, Email FROM members WHERE Email == $1", reporter).Scan(&mid, &memail)
+	if err != nil {
+		return Issue{}, ErrNoSuchMember
+	}
+
+	err = tx.QueryRow("SELECT Name FROM issues WHERE Name == $1 AND Project == $2", name, p.id).Scan(&iname)
+	if err != sql.ErrNoRows {
+		return Issue{}, ErrIssueExists
+	}
+
+	_, err = tx.Exec("INSERT INTO issues VALUES($1, $2, $3, $4, $5, $6, $7)", id, name, description, priority, Open, p.id, mid)
+	if err != nil {
+		return Issue{}, err
+	}
+
+	created = true
+
+	return Issue{id: id, name: name, description: description, priority: priority, status: Open, project: p.id, reporter: reporter}, nil
 }
 
 func collectProjects(ctx context.Context, rows *sql.Rows) ([]Project, error) {
