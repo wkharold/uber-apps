@@ -8,6 +8,15 @@ import (
 	"golang.org/x/net/context"
 )
 
+type assignIssueTest struct {
+	description string
+	issue       Issue
+	member      Member
+	ctxfn       func() context.Context
+	assigned    []Member
+	err         error
+}
+
 type findAllIssuesTest struct {
 	description string
 	fn          func(Issues, context.Context) ([]Issue, error)
@@ -94,6 +103,12 @@ var (
 )
 
 var (
+	assignIssueTests = []assignIssueTest{
+		{"Assign non-existent member", issueone, Member{id: 9999, email: "fred.c.dobbs@sierramadre.gld"}, alltheissues, []Member{}, ErrNoSuchMember},
+		{"Assign non-contributing member", issueone, bob, alltheissues, []Member{}, ErrNonContributingMember},
+		{"Assign first assignee", issuethree, alice, alltheissues, []Member{alice}, nil},
+		{"Assign additional assignee", issuetwo, alice, alltheissues, []Member{bob, alice}, nil},
+	}
 	findAllIssuesTests = []findAllIssuesTest{
 		{"FindAll empty tables", Issues.FindAll, emptytables, []Issue{}, nil},
 		{"FindAll no issues", Issues.FindAll, noissues, []Issue{}, nil},
@@ -153,6 +168,33 @@ var (
 	}
 )
 
+func TestAssignIssue(t *testing.T) {
+	for _, nt := range assignIssueTests {
+		ctx := nt.ctxfn()
+		db := ctx.Value("database").(*sql.DB)
+
+		err := nt.issue.Assign(ctx, nt.member)
+		switch {
+		case err != nil && err != nt.err:
+			t.Errorf("%s: unexpected error [%+v]", nt.description, err)
+		case err != nil:
+			break
+		default:
+			ms, err := nt.issue.Assigned(ctx)
+			if err != nil {
+				t.Errorf("%s: unable to verify assignments: [%+v]", nt.description, err)
+				break
+			}
+
+			if !samemembers(nt.assigned, ms) {
+				t.Error("%s: expected %+v, got %+v", nt.description, nt.assigned, ms)
+				break
+			}
+		}
+
+		dropdb(db)
+	}
+}
 func TestFindAllIssues(t *testing.T) {
 	for _, nt := range findAllIssuesTests {
 		ctx := nt.ctxfn()

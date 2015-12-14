@@ -2,6 +2,7 @@ package db
 
 import (
 	"database/sql"
+	"fmt"
 
 	"golang.org/x/net/context"
 )
@@ -91,6 +92,93 @@ func (Issues) FindByStatus(ctx context.Context, status string) ([]Issue, error) 
 	}
 
 	return collectIssues(ctx, rows)
+}
+
+// Assign adds the given Member to the list of Members assigned to this issue. The Member must exist and be a
+// contributor to the Project to which this issue belongs.
+func (i Issue) Assign(ctx context.Context, m Member) error {
+	db := databaseFromContext(ctx)
+
+	fmt.Println(m)
+
+	assigned := false
+
+	tx, err := db.Begin()
+	if err != nil {
+		return err
+	}
+	defer func() {
+		switch assigned {
+		case true:
+			tx.Commit()
+		case false:
+			tx.Rollback()
+		}
+	}()
+
+	var mid int
+
+	err = tx.QueryRow("SELECT ID FROM members WHERE ID == $1", m.id).Scan(&mid)
+	if err != nil {
+		fmt.Println(err)
+		return ErrNoSuchMember
+	}
+
+	rows, err := tx.Query(`
+	SELECT I.IID, I.Name, I.Description, I.Priority, I.Status, I.Project, I.Reporter
+	FROM (SELECT issues.ID AS IID, issues.Name AS Name, issues.Description AS Description, issues.Priority AS Priority, issues.Status AS Status, issues.Project AS Project, members.Email AS Reporter
+	      FROM issues, members
+		  WHERE issues.Reporter == members.ID
+		  ORDER BY IID) AS I
+	FULL JOIN assignments ON (I.IID == assignments.IID)
+    WHERE assignments.MID == $1
+	ORDER BY I.IID
+	`, m.id)
+	if err != nil {
+		return err
+	}
+
+	assignments, err := collectIssues(ctx, rows)
+
+	for _, assignment := range assignments {
+		if assignment == i {
+			return nil
+		}
+	}
+
+	p := Project{}
+
+	err = tx.QueryRow("SELECT projects.ID, projects.Name, projects.Description, members.Email FROM projects, members WHERE projects.Owner == members.ID AND projects.ID == $1;", i.project).Scan(&p.id, &p.name, &p.description, &p.owner)
+	if err != nil {
+		return err
+	}
+
+	rows, err = tx.Query("SELECT members.ID, members.Email FROM members FULL JOIN contributors ON (members.ID == contributors.MID) WHERE contributors.PID == $1 ORDER BY members.ID;", p.id)
+	if err != nil {
+		return err
+	}
+
+	contributors, err := collectMembers(ctx, rows)
+	if err != nil {
+		return err
+	}
+
+	for _, contributor := range contributors {
+		if contributor == m {
+			goto AssignMember // Yes, it's a goto. The code is cleaner than it would be without it.
+		}
+	}
+
+	return ErrNonContributingMember
+
+AssignMember:
+	_, err = tx.Exec("INSERT INTO assignments VALUES ($1, $2)", m.id, i.id)
+	if err != nil {
+		return err
+	}
+
+	assigned = true
+	return nil
 }
 
 // Assigned retrieves a list of project team members who are assigned to the issue.
