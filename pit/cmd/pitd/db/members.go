@@ -126,6 +126,68 @@ func (m Member) ContributesTo(ctx context.Context) ([]Project, error) {
 	return collectProjects(ctx, rows)
 }
 
+// Watch adds the project team member to the list of watchers for the specified issue.
+func (m Member) Watch(ctx context.Context, issue Issue) error {
+	db := databaseFromContext(ctx)
+
+	watching := true
+
+	tx, err := db.Begin()
+	if err != nil {
+		return err
+	}
+	defer func() {
+		switch watching {
+		case true:
+			tx.Commit()
+		case false:
+			tx.Rollback()
+		}
+	}()
+
+	var iid int
+
+	err = tx.QueryRow("SELECT ID FROM issues WHERE ID == $1", issue.id).Scan(&iid)
+	if err != nil {
+		return ErrNoSuchIssue
+	}
+
+	// get a list of the issues this member is watching
+	rows, err := tx.Query(`
+	SELECT I.IID, I.Name, I.Description, I.Priority, I.Status, I.Project, I.Reporter
+	FROM (SELECT issues.ID AS IID, issues.Name AS Name, issues.Description AS Description, issues.Priority AS Priority, issues.Status AS Status, issues.Project AS Project, members.Email AS Reporter
+	      FROM issues, members
+		  WHERE issues.Reporter == members.ID
+		  ORDER BY IID) AS I
+	FULL JOIN watchers ON (I.IID == watchers.IID)
+    WHERE watchers.MID == $1
+	ORDER BY I.IID
+    `, m.id)
+	if err != nil {
+		return err
+	}
+
+	watches, err := collectIssues(ctx, rows)
+	if err != nil {
+		return err
+	}
+
+	for _, watch := range watches {
+		if watch == issue {
+			// already watching, nothing to do
+			return nil
+		}
+	}
+
+	_, err = tx.Exec("INSERT INTO watchers VALUES ($1, $2)", m.id, issue.id)
+	if err != nil {
+		return err
+	}
+
+	watching = true
+	return nil
+}
+
 // Watching retrieves a list of all the issue the project team member is watching.
 func (m Member) Watching(ctx context.Context) ([]Issue, error) {
 	db := databaseFromContext(ctx)

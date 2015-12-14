@@ -99,8 +99,6 @@ func (Issues) FindByStatus(ctx context.Context, status string) ([]Issue, error) 
 func (i Issue) Assign(ctx context.Context, m Member) error {
 	db := databaseFromContext(ctx)
 
-	fmt.Println(m)
-
 	assigned := false
 
 	tx, err := db.Begin()
@@ -124,6 +122,7 @@ func (i Issue) Assign(ctx context.Context, m Member) error {
 		return ErrNoSuchMember
 	}
 
+	// get the list of issues this member is currently assigned
 	rows, err := tx.Query(`
 	SELECT I.IID, I.Name, I.Description, I.Priority, I.Status, I.Project, I.Reporter
 	FROM (SELECT issues.ID AS IID, issues.Name AS Name, issues.Description AS Description, issues.Priority AS Priority, issues.Status AS Status, issues.Project AS Project, members.Email AS Reporter
@@ -142,18 +141,13 @@ func (i Issue) Assign(ctx context.Context, m Member) error {
 
 	for _, assignment := range assignments {
 		if assignment == i {
+			// already assigned, nothing to do
 			return nil
 		}
 	}
 
-	p := Project{}
-
-	err = tx.QueryRow("SELECT projects.ID, projects.Name, projects.Description, members.Email FROM projects, members WHERE projects.Owner == members.ID AND projects.ID == $1;", i.project).Scan(&p.id, &p.name, &p.description, &p.owner)
-	if err != nil {
-		return err
-	}
-
-	rows, err = tx.Query("SELECT members.ID, members.Email FROM members FULL JOIN contributors ON (members.ID == contributors.MID) WHERE contributors.PID == $1 ORDER BY members.ID;", p.id)
+	// get a list of projects this member contributes to
+	rows, err = tx.Query("SELECT members.ID, members.Email FROM members FULL JOIN contributors ON (members.ID == contributors.MID) WHERE contributors.PID == $1 ORDER BY members.ID;", i.project)
 	if err != nil {
 		return err
 	}

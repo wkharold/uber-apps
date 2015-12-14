@@ -50,6 +50,15 @@ type memberIssuesTest struct {
 	err         error
 }
 
+type memberWatchTest struct {
+	description string
+	member      Member
+	issue       Issue
+	ctxfn       func() context.Context
+	watching    []Issue
+	err         error
+}
+
 type newMemberTest struct {
 	description string
 	fn          func(context.Context, string) (Member, error)
@@ -66,6 +75,7 @@ var (
 	carol = Member{id: 1004, email: "carol@members.com"}
 	ted   = Member{id: 1005, email: "ted@members.com"}
 	alice = Member{id: 1006, email: "alice@members.com"}
+	wilma = Member{id: 1009, email: "wilma@testrock.org"}
 )
 
 var (
@@ -95,6 +105,11 @@ var (
 		{"FindByID many members no match", Members.FindByID, 2001, manymembers, Member{}, sql.ErrNoRows},
 		{"FindByID one member", Members.FindByID, 1003, onemember, bob, nil},
 		{"FindByID members", Members.FindByID, 1005, manymembers, ted, nil},
+	}
+	memberWatchTests = []memberWatchTest{
+		{"Watch non existent issue", bob, Issue{}, alltheissues, []Issue{}, ErrNoSuchIssue},
+		{"Watch first issue", wilma, issueone, alltheissues, []Issue{issueone}, nil},
+		{"Watch another issue", alice, issueone, alltheissues, []Issue{issueone, issuefive}, nil},
 	}
 	newMemberTests = []newMemberTest{
 		{"NewMember empty tables", NewMember, "bob@members.com", 1003, emptytables, bob, []Member{bob}, nil},
@@ -145,6 +160,33 @@ func TestMemberContributesTo(t *testing.T) {
 			if !sameprojects(ps, nt.expected) {
 				t.Errorf("%s: got %+v, expected %+v", nt.description, ps, nt.expected)
 				break
+			}
+		}
+
+		dropdb(db)
+	}
+}
+
+func TestMemberWatch(t *testing.T) {
+	for _, nt := range memberWatchTests {
+		ctx := nt.ctxfn()
+		db := ctx.Value("database").(*sql.DB)
+
+		err := nt.member.Watch(ctx, nt.issue)
+		switch {
+		case err != nil && err != nt.err:
+			t.Errorf("%s: unexpected error [%+v]", nt.description, err)
+		case err != nil:
+			break
+		default:
+			watching, err := nt.member.Watching(ctx)
+			if err != nil {
+				t.Errorf("%s: cannot retrieve issues being watched: [%+v]", nt.description, err)
+				break
+			}
+
+			if !sameissues(watching, nt.watching) {
+				t.Errorf("%s: expected %+v, got %+v", nt.description, nt.watching, watching)
 			}
 		}
 

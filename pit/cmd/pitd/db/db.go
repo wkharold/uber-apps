@@ -21,6 +21,7 @@ var (
 	ErrIssueExists           = errors.New("Issue already exists")
 	ErrMemberExists          = errors.New("Member already exists")
 	ErrNonContributingMember = errors.New("Member is not a project contributor")
+	ErrNoSuchIssue           = errors.New("No such issue")
 	ErrNoSuchMember          = errors.New("No such member")
 	ErrNoSuchOwner           = errors.New("No such owner")
 	ErrProjectExists         = errors.New("Project exists")
