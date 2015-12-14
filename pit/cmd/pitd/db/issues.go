@@ -2,7 +2,6 @@ package db
 
 import (
 	"database/sql"
-	"fmt"
 
 	"golang.org/x/net/context"
 )
@@ -118,7 +117,6 @@ func (i Issue) Assign(ctx context.Context, m Member) error {
 
 	err = tx.QueryRow("SELECT ID FROM members WHERE ID == $1", m.id).Scan(&mid)
 	if err != nil {
-		fmt.Println(err)
 		return ErrNoSuchMember
 	}
 
