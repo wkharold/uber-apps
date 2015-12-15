@@ -2,6 +2,7 @@ package db
 
 import (
 	"database/sql"
+	"fmt"
 
 	"golang.org/x/net/context"
 )
@@ -126,11 +127,33 @@ func (m Member) ContributesTo(ctx context.Context) ([]Project, error) {
 	return collectProjects(ctx, rows)
 }
 
+// Join makes the project team member a contributor for the given project.
+func (m Member) Join(ctx context.Context, p Project) error {
+	db := databaseFromContext(ctx)
+
+	joined := false
+
+	tx, err := db.Begin()
+	if err != nil {
+		return err
+	}
+	defer func() {
+		switch joined {
+		case true:
+			tx.Commit()
+		case false:
+			tx.Rollback()
+		}
+	}()
+
+	return fmt.Errorf("Unimplemented")
+}
+
 // Watch adds the project team member to the list of watchers for the specified issue.
 func (m Member) Watch(ctx context.Context, issue Issue) error {
 	db := databaseFromContext(ctx)
 
-	watching := true
+	watching := false
 
 	tx, err := db.Begin()
 	if err != nil {
