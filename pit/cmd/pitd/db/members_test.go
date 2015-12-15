@@ -42,6 +42,15 @@ type findMembersByIDTest struct {
 	err         error
 }
 
+type joinProjectTest struct {
+	description string
+	member      Member
+	project     Project
+	ctxfn       func() context.Context
+	projects    []Project
+	err         error
+}
+
 type memberIssuesTest struct {
 	description string
 	fn          func(context.Context) ([]Issue, error)
@@ -106,6 +115,7 @@ var (
 		{"FindByID one member", Members.FindByID, 1003, onemember, bob, nil},
 		{"FindByID members", Members.FindByID, 1005, manymembers, ted, nil},
 	}
+	joinProjectTests = []joinProjectTest{}
 	memberWatchTests = []memberWatchTest{
 		{"Watch non existent issue", bob, Issue{}, alltheissues, []Issue{}, ErrNoSuchIssue},
 		{"Watch first issue", wilma, issueone, alltheissues, []Issue{issueone}, nil},
@@ -138,6 +148,33 @@ func TestMemberAssignments(t *testing.T) {
 			if !sameissues(is, nt.expected) {
 				t.Errorf("%s: got %+v, expected %+v", nt.description, is, nt.expected)
 				break
+			}
+		}
+
+		dropdb(db)
+	}
+}
+
+func TestMemberJoin(t *testing.T) {
+	for _, nt := range joinProjectTests {
+		ctx := nt.ctxfn()
+		db := ctx.Value("database").(*sql.DB)
+
+		err := nt.member.Join(ctx, nt.project)
+		switch {
+		case err != nil && err != nt.err:
+			t.Errorf("%s: unexpected error [%+v]", nt.description, err)
+		case err != nil:
+			break
+		default:
+			projects, err := nt.member.ContributesTo(ctx)
+			if err != nil {
+				t.Errorf("%s: cannot retrieve issues being watched: [%+v]", nt.description, err)
+				break
+			}
+
+			if !sameprojects(projects, nt.projects) {
+				t.Errorf("%s: expected %+v, got %+v", nt.description, nt.projects, projects)
 			}
 		}
 
