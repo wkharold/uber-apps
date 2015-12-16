@@ -115,7 +115,10 @@ var (
 		{"FindByID one member", Members.FindByID, 1003, onemember, bob, nil},
 		{"FindByID members", Members.FindByID, 1005, manymembers, ted, nil},
 	}
-	joinProjectTests = []joinProjectTest{}
+	joinProjectTests = []joinProjectTest{
+		{"Join non existent project", bob, Project{}, emptytables, []Project{}, ErrNoSuchProject},
+		{"Join first project", bob, pone, oneproject, []Project{pone}, nil},
+	}
 	memberWatchTests = []memberWatchTest{
 		{"Watch non existent issue", bob, Issue{}, alltheissues, []Issue{}, ErrNoSuchIssue},
 		{"Watch first issue", wilma, issueone, alltheissues, []Issue{issueone}, nil},

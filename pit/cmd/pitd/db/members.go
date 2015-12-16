@@ -2,7 +2,6 @@ package db
 
 import (
 	"database/sql"
-	"fmt"
 
 	"golang.org/x/net/context"
 )
@@ -146,7 +145,47 @@ func (m Member) Join(ctx context.Context, p Project) error {
 		}
 	}()
 
-	return fmt.Errorf("Unimplemented")
+	var pid int
+
+	err = tx.QueryRow("SELECT ID FROM projects WHERE ID == $1", p.id).Scan(&pid)
+	if err != nil {
+		return ErrNoSuchProject
+	}
+
+	// get a list of the projects this member contributes to
+	rows, err := tx.Query(`
+	SELECT P.PID, P.Name, P.Description, P.Email
+	FROM (SELECT projects.ID AS PID, projects.Name AS Name, projects.Description AS Description, members.Email AS Email
+		  FROM projects, members
+		  WHERE projects.Owner == members.ID
+		  ORDER BY PID) AS P
+	FULL JOIN contributors ON (P.PID == contributors.PID)
+	WHERE contributors.MID == $1
+	ORDER BY P.PID
+	`, m.id)
+	if err != nil {
+		return err
+	}
+
+	projects, err := collectProjects(ctx, rows)
+	if err != nil {
+		return err
+	}
+
+	for _, project := range projects {
+		if project == p {
+			// already contributes, nothing to do
+			return nil
+		}
+	}
+
+	_, err = tx.Exec("INSERT INTO contributors VALUES ($1, $2)", p.id, m.id)
+	if err != nil {
+		return err
+	}
+
+	joined = true
+	return nil
 }
 
 // Watch adds the project team member to the list of watchers for the specified issue.

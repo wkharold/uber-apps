@@ -24,6 +24,7 @@ var (
 	ErrNoSuchIssue           = errors.New("No such issue")
 	ErrNoSuchMember          = errors.New("No such member")
 	ErrNoSuchOwner           = errors.New("No such owner")
+	ErrNoSuchProject         = errors.New("No such project")
 	ErrProjectExists         = errors.New("Project exists")
 )
 
