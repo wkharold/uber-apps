@@ -118,6 +118,8 @@ var (
 	joinProjectTests = []joinProjectTest{
 		{"Join non existent project", bob, Project{}, emptytables, []Project{}, ErrNoSuchProject},
 		{"Join first project", bob, pone, oneproject, []Project{pone}, nil},
+		{"Join another project", alice, pone, contributors, []Project{pone, ptwo, pthree}, nil},
+		{"Join already contributing", alice, ptwo, contributors, []Project{ptwo, pthree}, nil},
 	}
 	memberWatchTests = []memberWatchTest{
 		{"Watch non existent issue", bob, Issue{}, alltheissues, []Issue{}, ErrNoSuchIssue},
