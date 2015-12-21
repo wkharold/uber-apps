@@ -284,5 +284,7 @@ func collectMembers(ctx context.Context, rows *sql.Rows) ([]Member, error) {
 		result = append(result, member)
 	}
 
+	rows.Close()
+
 	return result, nil
 }

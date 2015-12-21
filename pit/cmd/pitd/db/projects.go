@@ -231,5 +231,7 @@ func collectProjects(ctx context.Context, rows *sql.Rows) ([]Project, error) {
 		result = append(result, project)
 	}
 
+	rows.Close()
+
 	return result, nil
 }

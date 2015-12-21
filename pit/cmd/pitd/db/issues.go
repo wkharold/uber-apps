@@ -210,5 +210,7 @@ func collectIssues(ctx context.Context, rows *sql.Rows) ([]Issue, error) {
 		result = append(result, issue)
 	}
 
+	rows.Close()
+
 	return result, nil
 }
