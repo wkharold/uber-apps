@@ -357,14 +357,12 @@ func TestOpenProjectIssue(t *testing.T) {
 		case err != nil:
 			break
 		default:
-			var issues Issues
-
 			if i != nt.expected {
 				t.Errorf("%s: expected %+v, got %+v", nt.description, nt.expected, i)
 				break
 			}
 
-			is, err := issues.FindByProject(ctx, i.project)
+			is, err := FindIssuesByProject(ctx, i.project)
 			if err != nil {
 				t.Errorf("%s: unexpected verification error [%+v]", nt.description, err)
 				break
