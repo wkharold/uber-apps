@@ -61,6 +61,57 @@ func NewProject(ctx context.Context, name, description, owner string) (Project, 
 	return Project{id: id, name: name, description: description, owner: owner}, nil
 }
 
+// AddMember adds the specified member to the project's list of contributors.
+func (p Project) AddMember(ctx context.Context, member Member) error {
+	db := databaseFromContext(ctx)
+
+	added := false
+
+	tx, err := db.Begin()
+	if err != nil {
+		return err
+	}
+	defer func() {
+		switch added {
+		case true:
+			tx.Commit()
+		case false:
+			tx.Rollback()
+		}
+	}()
+
+	var mid int
+	err = tx.QueryRow("SELECT ID FROM members WHERE ID == $1", member.id).Scan(&mid)
+	if err != nil {
+		return ErrNoSuchMember
+	}
+
+	rows, err := tx.Query("SELECT members.ID, members.Email FROM members FULL JOIN contributors ON (members.ID == contributors.MID) WHERE contributors.PID == $1 ORDER BY members.ID;", p.id)
+	if err != nil {
+		return err
+	}
+
+	members, err := collectMembers(ctx, rows)
+	if err != nil {
+		return err
+	}
+
+	for _, m := range members {
+		if m == member {
+			// Already a member, nothing to do
+			return nil
+		}
+	}
+
+	_, err = tx.Exec("INSERT INTO contributors VALUES ($1, $2)", p.id, member.id)
+	if err != nil {
+		return err
+	}
+
+	added = true
+	return nil
+}
+
 // FindAll retrieves a list of all the projects in the repository.
 func (Projects) FindAll(ctx context.Context) ([]Project, error) {
 	db := databaseFromContext(ctx)

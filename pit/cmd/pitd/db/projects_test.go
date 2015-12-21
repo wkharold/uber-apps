@@ -8,6 +8,15 @@ import (
 	"golang.org/x/net/context"
 )
 
+type addMemberTest struct {
+	description string
+	project     Project
+	member      Member
+	ctxfn       func() context.Context
+	postmembers []Member
+	err         error
+}
+
 type contributorstest struct {
 	description string
 	fn          func(context.Context) ([]Member, error)
@@ -100,6 +109,12 @@ var (
 )
 
 var (
+	addMemberTests = []addMemberTest{
+		{"AddMember no such member", pone, Member{id: 42, email: "fred.c.dobbs@sierramadre.gld"}, emptytables, []Member{}, ErrNoSuchMember},
+		{"AddMember first contributor", pone, bob, contributors, []Member{bob}, nil},
+		{"AddMember duplicate contributor", pthree, ted, contributors, []Member{carol, ted, alice}, nil},
+		{"AddMember additional contributor", ptwo, bob, contributors, []Member{bob, alice}, nil},
+	}
 	contributorstests = []contributorstest{
 		{"Contributors no contributors", pone.Contributors, contributors, []Member{}, nil},
 		{"Contributors single contributor", ptwo.Contributors, contributors, []Member{alice}, nil},
@@ -146,6 +161,35 @@ var (
 	}
 )
 
+func TestAddMember(t *testing.T) {
+	for _, nt := range addMemberTests {
+		ctx := nt.ctxfn()
+		db, ok := ctx.Value("database").(*sql.DB)
+		if !ok {
+			t.Fatalf("%s: no database in context")
+		}
+
+		err := nt.project.AddMember(ctx, nt.member)
+		switch {
+		case err != nil && err != nt.err:
+			t.Errorf("%s: unexpected error [%+v]", nt.description, err)
+		case err != nil:
+			break
+		default:
+			members, err := nt.project.Contributors(ctx)
+			if err != nil {
+				t.Errorf("%s: cannot retrieve contributors: [%+v]", nt.description, err)
+				break
+			}
+
+			if !samemembers(members, nt.postmembers) {
+				t.Errorf("%s: expected %+v, got %+v", nt.description, nt.postmembers, members)
+			}
+		}
+
+		dropdb(db)
+	}
+}
 func TestContributors(t *testing.T) {
 	for _, nt := range contributorstests {
 		ctx := nt.ctxfn()

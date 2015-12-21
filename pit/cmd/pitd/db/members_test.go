@@ -174,7 +174,7 @@ func TestMemberJoin(t *testing.T) {
 		default:
 			projects, err := nt.member.ContributesTo(ctx)
 			if err != nil {
-				t.Errorf("%s: cannot retrieve issues being watched: [%+v]", nt.description, err)
+				t.Errorf("%s: cannot retrieve project member contributes to: [%+v]", nt.description, err)
 				break
 			}
 
