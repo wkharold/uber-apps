@@ -2,7 +2,6 @@ package db
 
 import (
 	"database/sql"
-	"fmt"
 	"testing"
 
 	"golang.org/x/net/context"
@@ -356,89 +355,4 @@ func TestNewMembers(t *testing.T) {
 
 		dropdb(db)
 	}
-}
-
-func contributions() context.Context {
-	db := createdb("contributions")
-
-	ctx := context.Background()
-	ctx = context.WithValue(ctx, "database", db)
-
-	tx, err := db.Begin()
-	if err != nil {
-		panic(fmt.Sprintf("cannot create transaction to setup the database: [%v]", err))
-	}
-
-	if _, err := tx.Exec(`INSERT INTO projects VALUES
-						  (101, "project one", "first test project", 1001),
-						  (102, "project two", "second test project", 1001),
-						  (103, "project three", "third test project", 1002);`); err != nil {
-		panic(fmt.Sprintf("cannot setup projects table: [%+v]", err))
-	}
-
-	if _, err := tx.Exec(`INSERT INTO members VALUES
-						  (1001, "owner@test.net"),
-						  (1002, "owner@test.io"),
-						  (1003, "bob@members.com"),
-						  (1004, "carol@members.com"),
-						  (1005, "ted@members.com"),
-						  (1006, "alice@members.com");`); err != nil {
-		panic(fmt.Sprintf("cannot setup members table: [%+v]", err))
-	}
-
-	if _, err := tx.Exec(`INSERT INTO contributors VALUES
-						  (101, 1006),
-						  (101, 1004),
-						  (103, 1006);`); err != nil {
-		panic(fmt.Sprintf("cannot setup contributors table: [%+v]", err))
-	}
-
-	tx.Commit()
-
-	return ctx
-}
-
-func onemember() context.Context {
-	db := createdb("onemember")
-
-	ctx := context.Background()
-	ctx = context.WithValue(ctx, "database", db)
-	ctx = context.WithValue(ctx, "ids-chan", make(chan int))
-
-	tx, err := db.Begin()
-	if err != nil {
-		panic(fmt.Sprintf("cannot create transaction to setup the database: [%+v]", err))
-	}
-
-	if _, err := tx.Exec(`INSERT INTO members VALUES (1003, "bob@members.com");`); err != nil {
-		panic(fmt.Sprintf("cannot setup members table: [%+v]", err))
-	}
-
-	tx.Commit()
-
-	return ctx
-}
-
-func manymembers() context.Context {
-	db := createdb("manymembers")
-
-	ctx := context.Background()
-	ctx = context.WithValue(ctx, "database", db)
-	ctx = context.WithValue(ctx, "ids-chan", make(chan int))
-
-	tx, err := db.Begin()
-	if err != nil {
-		panic(fmt.Sprintf("cannot create transaction to setup the database: [%+v]", err))
-	}
-
-	if _, err := tx.Exec(`INSERT INTO members VALUES 
-						  (1004, "carol@members.com"),
-						  (1005, "ted@members.com"),
-						  (1006, "alice@members.com");`); err != nil {
-		panic(fmt.Sprintf("cannot setup members table: [%+v]", err))
-	}
-
-	tx.Commit()
-
-	return ctx
 }
