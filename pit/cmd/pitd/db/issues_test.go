@@ -19,15 +19,13 @@ type assignIssueTest struct {
 
 type findAllIssuesTest struct {
 	description string
-	fn          func(Issues, context.Context) ([]Issue, error)
 	ctxfn       func() context.Context
 	expected    []Issue
 	err         error
 }
 
-type findIssuesByIDTest struct {
+type findIssueByIDTest struct {
 	description string
-	fn          func(Issues, context.Context, int) (Issue, error)
 	id          int
 	ctxfn       func() context.Context
 	expected    Issue
@@ -36,7 +34,6 @@ type findIssuesByIDTest struct {
 
 type findIssuesByPriorityTest struct {
 	description string
-	fn          func(Issues, context.Context, int) ([]Issue, error)
 	priority    int
 	ctxfn       func() context.Context
 	expected    []Issue
@@ -45,7 +42,6 @@ type findIssuesByPriorityTest struct {
 
 type findIssuesByProjectTest struct {
 	description string
-	fn          func(Issues, context.Context, int) ([]Issue, error)
 	project     int
 	ctxfn       func() context.Context
 	expected    []Issue
@@ -54,7 +50,6 @@ type findIssuesByProjectTest struct {
 
 type findIssuesByReporterTest struct {
 	description string
-	fn          func(Issues, context.Context, string) ([]Issue, error)
 	reporter    string
 	ctxfn       func() context.Context
 	expected    []Issue
@@ -63,7 +58,6 @@ type findIssuesByReporterTest struct {
 
 type findIssuesByStatusTest struct {
 	description string
-	fn          func(Issues, context.Context, string) ([]Issue, error)
 	status      string
 	ctxfn       func() context.Context
 	expected    []Issue
@@ -110,49 +104,49 @@ var (
 		{"Assign additional assignee", issuetwo, alice, alltheissues, []Member{bob, alice}, nil},
 	}
 	findAllIssuesTests = []findAllIssuesTest{
-		{"FindAll empty tables", Issues.FindAll, emptytables, []Issue{}, nil},
-		{"FindAll no issues", Issues.FindAll, noissues, []Issue{}, nil},
-		{"FindAll one issue", Issues.FindAll, oneissue, []Issue{issueone}, nil},
-		{"FindAll issues", Issues.FindAll, alltheissues, []Issue{issueone, issuetwo, issuethree, issuefour, issuefive, issuesix}, nil},
+		{"FindAll empty tables", emptytables, []Issue{}, nil},
+		{"FindAll no issues", noissues, []Issue{}, nil},
+		{"FindAll one issue", oneissue, []Issue{issueone}, nil},
+		{"FindAll issues", alltheissues, []Issue{issueone, issuetwo, issuethree, issuefour, issuefive, issuesix}, nil},
 	}
-	findIssuesByIDTests = []findIssuesByIDTest{
-		{"FindByID empty tables", Issues.FindByID, 42, emptytables, Issue{}, sql.ErrNoRows},
-		{"FindByID one issue", Issues.FindByID, 2001, oneissue, issueone, nil},
-		{"FindByID one issue no match", Issues.FindByID, 1001, oneissue, Issue{}, sql.ErrNoRows},
-		{"FindByID issues", Issues.FindByID, 2001, alltheissues, issueone, nil},
-		{"FindByID issues no match", Issues.FindByID, 1001, alltheissues, Issue{}, sql.ErrNoRows},
+	findIssueByIDTests = []findIssueByIDTest{
+		{"FindByID empty tables", 42, emptytables, Issue{}, sql.ErrNoRows},
+		{"FindByID one issue", 2001, oneissue, issueone, nil},
+		{"FindByID one issue no match", 1001, oneissue, Issue{}, sql.ErrNoRows},
+		{"FindByID issues", 2001, alltheissues, issueone, nil},
+		{"FindByID issues no match", 1001, alltheissues, Issue{}, sql.ErrNoRows},
 	}
 	findIssuesByPriorityTests = []findIssuesByPriorityTest{
-		{"FindByPriority empty tables", Issues.FindByPriority, 1, emptytables, []Issue{}, nil},
-		{"FindByPriority one issue", Issues.FindByPriority, 1, oneissue, []Issue{issueone}, nil},
-		{"FindByPriority one issue no match", Issues.FindByPriority, 3, oneissue, []Issue{}, nil},
-		{"FindByPriority issues no match", Issues.FindByPriority, 5, alltheissues, []Issue{}, nil},
-		{"FindByPriority issues one match", Issues.FindByPriority, 1, alltheissues, []Issue{issueone}, nil},
-		{"FindByPriority issues", Issues.FindByPriority, 2, alltheissues, []Issue{issuetwo, issuethree, issuefive}, nil},
+		{"FindByPriority empty tables", 1, emptytables, []Issue{}, nil},
+		{"FindByPriority one issue", 1, oneissue, []Issue{issueone}, nil},
+		{"FindByPriority one issue no match", 3, oneissue, []Issue{}, nil},
+		{"FindByPriority issues no match", 5, alltheissues, []Issue{}, nil},
+		{"FindByPriority issues one match", 1, alltheissues, []Issue{issueone}, nil},
+		{"FindByPriority issues", 2, alltheissues, []Issue{issuetwo, issuethree, issuefive}, nil},
 	}
 	findIssuesByProjectTests = []findIssuesByProjectTest{
-		{"FindByProject empty tables", Issues.FindByProject, 112, emptytables, []Issue{}, nil},
-		{"FindByProject one issue", Issues.FindByProject, 101, oneissue, []Issue{issueone}, nil},
-		{"FindByProject one issue no match", Issues.FindByProject, 112, oneissue, []Issue{}, nil},
-		{"FindByProject issues no match", Issues.FindByProject, 212, alltheissues, []Issue{}, nil},
-		{"FindByProject issues one match", Issues.FindByProject, 101, alltheissues, []Issue{issueone}, nil},
-		{"FindByProject issues", Issues.FindByProject, 102, alltheissues, []Issue{issuetwo, issuethree}, nil},
+		{"FindByProject empty tables", 112, emptytables, []Issue{}, nil},
+		{"FindByProject one issue", 101, oneissue, []Issue{issueone}, nil},
+		{"FindByProject one issue no match", 112, oneissue, []Issue{}, nil},
+		{"FindByProject issues no match", 212, alltheissues, []Issue{}, nil},
+		{"FindByProject issues one match", 101, alltheissues, []Issue{issueone}, nil},
+		{"FindByProject issues", 102, alltheissues, []Issue{issuetwo, issuethree}, nil},
 	}
 	findIssuesByReporterTests = []findIssuesByReporterTest{
-		{"FindByReporter empty tables", Issues.FindByReporter, "fred.c.dobbs@sierra.madre", emptytables, []Issue{}, nil},
-		{"FindByReporter one issue", Issues.FindByReporter, "fred@testrock.org", oneissue, []Issue{issueone}, nil},
-		{"FindByReporter one issue no match", Issues.FindByReporter, "betty@testrock.org", oneissue, []Issue{}, nil},
-		{"FindByReporter issues no match", Issues.FindByReporter, "betty@testrock.org", alltheissues, []Issue{}, nil},
-		{"FindByReporter issues one match", Issues.FindByReporter, "wilma@testrock.org", alltheissues, []Issue{issuesix}, nil},
-		{"FindByReporter issues", Issues.FindByReporter, "fred@testrock.org", alltheissues, []Issue{issueone, issuefour, issuefive}, nil},
+		{"FindByReporter empty tables", "fred.c.dobbs@sierra.madre", emptytables, []Issue{}, nil},
+		{"FindByReporter one issue", "fred@testrock.org", oneissue, []Issue{issueone}, nil},
+		{"FindByReporter one issue no match", "betty@testrock.org", oneissue, []Issue{}, nil},
+		{"FindByReporter issues no match", "betty@testrock.org", alltheissues, []Issue{}, nil},
+		{"FindByReporter issues one match", "wilma@testrock.org", alltheissues, []Issue{issuesix}, nil},
+		{"FindByReporter issues", "fred@testrock.org", alltheissues, []Issue{issueone, issuefour, issuefive}, nil},
 	}
 	findIssuesByStatusTests = []findIssuesByStatusTest{
-		{"FindByStatus empty tables", Issues.FindByStatus, Closed, emptytables, []Issue{}, nil},
-		{"FindByStatus one issue", Issues.FindByStatus, Open, oneissue, []Issue{issueone}, nil},
-		{"FindByStatus one issue on match", Issues.FindByStatus, Returned, oneissue, []Issue{}, nil},
-		{"FindByStatus issues no match", Issues.FindByStatus, "UNKNOWN", alltheissues, []Issue{}, nil},
-		{"FindByStatus issues one match", Issues.FindByStatus, Returned, alltheissues, []Issue{issuefour}, nil},
-		{"FindByStatus issues", Issues.FindByStatus, Closed, alltheissues, []Issue{issuethree, issuesix}, nil},
+		{"FindByStatus empty tables", Closed, emptytables, []Issue{}, nil},
+		{"FindByStatus one issue", Open, oneissue, []Issue{issueone}, nil},
+		{"FindByStatus one issue on match", Returned, oneissue, []Issue{}, nil},
+		{"FindByStatus issues no match", "UNKNOWN", alltheissues, []Issue{}, nil},
+		{"FindByStatus issues one match", Returned, alltheissues, []Issue{issuefour}, nil},
+		{"FindByStatus issues", Closed, alltheissues, []Issue{issuethree, issuesix}, nil},
 	}
 	issueAssignedTests = []issueTest{
 		{"Assigned empty tables", issueone.Assigned, emptytables, []Member{}, nil},
@@ -200,7 +194,7 @@ func TestFindAllIssues(t *testing.T) {
 		ctx := nt.ctxfn()
 		db := ctx.Value("database").(*sql.DB)
 
-		is, err := nt.fn(struct{}{}, ctx)
+		is, err := FindAllIssues(ctx)
 		switch {
 		case err != nil:
 			t.Errorf("%s: unexpected error [%+v]", nt.description, err)
@@ -214,12 +208,12 @@ func TestFindAllIssues(t *testing.T) {
 	}
 }
 
-func TestFindIssuesByID(t *testing.T) {
-	for _, nt := range findIssuesByIDTests {
+func TestFindIssueByID(t *testing.T) {
+	for _, nt := range findIssueByIDTests {
 		ctx := nt.ctxfn()
 		db := ctx.Value("database").(*sql.DB)
 
-		p, err := nt.fn(struct{}{}, ctx, nt.id)
+		p, err := FindIssueByID(ctx, nt.id)
 		switch {
 		case err != nil && err != nt.err:
 			t.Errorf("%s: unexpected error [%+v]", nt.description, err)
@@ -241,7 +235,7 @@ func TestFindIssuesByPriority(t *testing.T) {
 		ctx := nt.ctxfn()
 		db := ctx.Value("database").(*sql.DB)
 
-		is, err := nt.fn(struct{}{}, ctx, nt.priority)
+		is, err := FindIssuesByPriority(ctx, nt.priority)
 		switch {
 		case err != nil:
 			t.Errorf("%s: unexpected error [%+v]", nt.description, err)
@@ -260,7 +254,7 @@ func TestFindIssuesByProject(t *testing.T) {
 		ctx := nt.ctxfn()
 		db := ctx.Value("database").(*sql.DB)
 
-		is, err := nt.fn(struct{}{}, ctx, nt.project)
+		is, err := FindIssuesByProject(ctx, nt.project)
 		switch {
 		case err != nil:
 			t.Errorf("%s: unexpected error [%+v]", nt.description, err)
@@ -279,7 +273,7 @@ func TestFindIssuesByReporter(t *testing.T) {
 		ctx := nt.ctxfn()
 		db := ctx.Value("database").(*sql.DB)
 
-		is, err := nt.fn(struct{}{}, ctx, nt.reporter)
+		is, err := FindIssuesByReporter(ctx, nt.reporter)
 		switch {
 		case err != nil:
 			t.Errorf("%s: unexpected error [%+v]", nt.description, err)
@@ -298,7 +292,7 @@ func TestFindIssuesByStatus(t *testing.T) {
 		ctx := nt.ctxfn()
 		db := ctx.Value("database").(*sql.DB)
 
-		is, err := nt.fn(struct{}{}, ctx, nt.status)
+		is, err := FindIssuesByStatus(ctx, nt.status)
 		switch {
 		case err != nil:
 			t.Errorf("%s: unexpected error [%+v]", nt.description, err)

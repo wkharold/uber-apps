@@ -27,7 +27,6 @@ type contributorstest struct {
 
 type findAllProjectsTest struct {
 	description string
-	fn          func(Projects, context.Context) ([]Project, error)
 	ctxfn       func() context.Context
 	expected    []Project
 	err         error
@@ -35,25 +34,22 @@ type findAllProjectsTest struct {
 
 type findProjectsByOwnerTest struct {
 	description string
-	fn          func(Projects, context.Context, string) ([]Project, error)
 	owner       string
 	ctxfn       func() context.Context
 	expected    []Project
 	err         error
 }
 
-type findProjectsByIDTest struct {
+type findProjectByIDTest struct {
 	description string
-	fn          func(Projects, context.Context, int) (Project, error)
 	id          int
 	ctxfn       func() context.Context
 	expected    Project
 	err         error
 }
 
-type findProjectsByNameTest struct {
+type findProjectByNameTest struct {
 	description string
-	fn          func(Projects, context.Context, string) (Project, error)
 	name        string
 	ctxfn       func() context.Context
 	expected    Project
@@ -62,7 +58,6 @@ type findProjectsByNameTest struct {
 
 type newProjectTest struct {
 	description string
-	fn          func(context.Context, string, string, string) (Project, error)
 	name        string
 	desc        string
 	owner       string
@@ -121,36 +116,36 @@ var (
 		{"Contributors multiple", pthree.Contributors, contributors, []Member{carol, ted, alice}, nil},
 	}
 	findAllProjectsTests = []findAllProjectsTest{
-		{"FindAll from empty tables", Projects.FindAll, emptytables, []Project{}, nil},
-		{"FindAll one project", Projects.FindAll, oneproject, []Project{pone}, nil},
-		{"FindAll multiple projects", Projects.FindAll, manyprojects, []Project{pone, ptwo, pthree}, nil},
+		{"FindAll from empty tables", emptytables, []Project{}, nil},
+		{"FindAll one project", oneproject, []Project{pone}, nil},
+		{"FindAll multiple projects", manyprojects, []Project{pone, ptwo, pthree}, nil},
 	}
 	findProjectsByOwnerTests = []findProjectsByOwnerTest{
-		{"FindByOwner from empty tables", Projects.FindByOwner, "owner@test.net", emptytables, []Project{}, nil},
-		{"FindByOwner one project no match", Projects.FindByOwner, "owner@test.org", oneproject, []Project{}, nil},
-		{"FindByOwner multiple projects no match", Projects.FindByOwner, "owner@test.com", manyprojects, []Project{}, nil},
-		{"FindByOwner one project", Projects.FindByOwner, "owner@test.net", oneproject, []Project{pone}, nil},
-		{"FindByOwner multiple projects one match", Projects.FindByOwner, "owner@test.io", manyprojects, []Project{pthree}, nil},
-		{"FindByOwner multiple projects", Projects.FindByOwner, "owner@test.net", manyprojects, []Project{pone, ptwo}, nil},
+		{"FindByOwner from empty tables", "owner@test.net", emptytables, []Project{}, nil},
+		{"FindByOwner one project no match", "owner@test.org", oneproject, []Project{}, nil},
+		{"FindByOwner multiple projects no match", "owner@test.com", manyprojects, []Project{}, nil},
+		{"FindByOwner one project", "owner@test.net", oneproject, []Project{pone}, nil},
+		{"FindByOwner multiple projects one match", "owner@test.io", manyprojects, []Project{pthree}, nil},
+		{"FindByOwner multiple projects", "owner@test.net", manyprojects, []Project{pone, ptwo}, nil},
 	}
-	findProjectsByIDTests = []findProjectsByIDTest{
-		{"FindByID empty tables", Projects.FindByID, 42, emptytables, Project{}, sql.ErrNoRows},
-		{"FindByID multiple projects none match", Projects.FindByID, 42, manyprojects, Project{}, sql.ErrNoRows},
-		{"FindByID one project", Projects.FindByID, 101, oneproject, pone, nil},
-		{"FindByID multiple projects", Projects.FindByID, 103, manyprojects, pthree, nil},
+	findProjectByIDTests = []findProjectByIDTest{
+		{"FindByID empty tables", 42, emptytables, Project{}, sql.ErrNoRows},
+		{"FindByID multiple projects none match", 42, manyprojects, Project{}, sql.ErrNoRows},
+		{"FindByID one project", 101, oneproject, pone, nil},
+		{"FindByID multiple projects", 103, manyprojects, pthree, nil},
 	}
-	findProjectsByNameTests = []findProjectsByNameTest{
-		{"FindByName empty tables", Projects.FindByName, "unknown", emptytables, Project{}, sql.ErrNoRows},
-		{"FindByName multiple projects none match", Projects.FindByName, "unknown", manyprojects, Project{}, sql.ErrNoRows},
-		{"FindByName one project", Projects.FindByName, "project one", oneproject, pone, nil},
-		{"FindByName multiple projects", Projects.FindByName, "project two", manyprojects, ptwo, nil},
+	findProjectByNameTests = []findProjectByNameTest{
+		{"FindByName empty tables", "unknown", emptytables, Project{}, sql.ErrNoRows},
+		{"FindByName multiple projects none match", "unknown", manyprojects, Project{}, sql.ErrNoRows},
+		{"FindByName one project", "project one", oneproject, pone, nil},
+		{"FindByName multiple projects", "project two", manyprojects, ptwo, nil},
 	}
 	newProjectTests = []newProjectTest{
-		{"NewProject no projects", NewProject, "project one", "first test project", "owner@test.net", 101, noprojects, pone, []Project{pone}, nil},
-		{"NewProject no such owner", NewProject, "project bogus", "bogus test project", "unknown@bogus.io", 999, noprojects, Project{}, []Project{}, ErrNoSuchOwner},
-		{"NewProject project exists", NewProject, "project one", "first test project", "owner@test.net", 101, oneproject, Project{}, []Project{pone}, ErrProjectExists},
-		{"NewProject one project", NewProject, "project three", "third test project", "owner@test.io", 103, oneproject, pthree, []Project{pone, pthree}, nil},
-		{"NewProject", NewProject, "project four", "fourth test project", "owner@test.net", 104, manyprojects, pfour, []Project{pone, ptwo, pthree, pfour}, nil},
+		{"NewProject no projects", "project one", "first test project", "owner@test.net", 101, noprojects, pone, []Project{pone}, nil},
+		{"NewProject no such owner", "project bogus", "bogus test project", "unknown@bogus.io", 999, noprojects, Project{}, []Project{}, ErrNoSuchOwner},
+		{"NewProject project exists", "project one", "first test project", "owner@test.net", 101, oneproject, Project{}, []Project{pone}, ErrProjectExists},
+		{"NewProject one project", "project three", "third test project", "owner@test.io", 103, oneproject, pthree, []Project{pone, pthree}, nil},
+		{"NewProject", "project four", "fourth test project", "owner@test.net", 104, manyprojects, pfour, []Project{pone, ptwo, pthree, pfour}, nil},
 	}
 	openProjectIssueTests = []openProjectIssueTest{
 		{"OpenIssue no issues", pone.OpenIssue, "issueone", "issue one", "fred@testrock.org", 1, 2001, projectissues, issueone, []Issue{issueone}, nil},
@@ -217,7 +212,7 @@ func TestFindAllProjects(t *testing.T) {
 		ctx := nt.ctxfn()
 		db := ctx.Value("database").(*sql.DB)
 
-		ps, err := nt.fn(struct{}{}, ctx)
+		ps, err := FindAllProjects(ctx)
 		if err != nil {
 			t.Errorf("%s: unexpected error [%+v]", nt.description, err)
 			dropdb(db)
@@ -239,7 +234,7 @@ func TestFindProjectsByOwner(t *testing.T) {
 		ctx := nt.ctxfn()
 		db := ctx.Value("database").(*sql.DB)
 
-		ps, err := nt.fn(struct{}{}, ctx, nt.owner)
+		ps, err := FindProjectsByOwner(ctx, nt.owner)
 		if err != nil {
 			t.Errorf("%s: unexpected error [%+v]", nt.description, err)
 			dropdb(db)
@@ -256,12 +251,12 @@ func TestFindProjectsByOwner(t *testing.T) {
 	}
 }
 
-func TestFindProjectsByID(t *testing.T) {
-	for _, nt := range findProjectsByIDTests {
+func TestFindProjectByID(t *testing.T) {
+	for _, nt := range findProjectByIDTests {
 		ctx := nt.ctxfn()
 		db := ctx.Value("database").(*sql.DB)
 
-		p, err := nt.fn(struct{}{}, ctx, nt.id)
+		p, err := FindProjectByID(ctx, nt.id)
 		switch {
 		case err != nil && err != nt.err:
 			t.Errorf("%s: unexpected error [%+v]", nt.description, err)
@@ -278,12 +273,12 @@ func TestFindProjectsByID(t *testing.T) {
 	}
 }
 
-func TestFindProjectsByName(t *testing.T) {
-	for _, nt := range findProjectsByNameTests {
+func TestFindProjectByName(t *testing.T) {
+	for _, nt := range findProjectByNameTests {
 		ctx := nt.ctxfn()
 		db := ctx.Value("database").(*sql.DB)
 
-		p, err := nt.fn(struct{}{}, ctx, nt.name)
+		p, err := FindProjectByName(ctx, nt.name)
 		switch {
 		case err != nil && err != nt.err:
 			t.Errorf("%s: unexpected error [%+v]", nt.description, err)
@@ -310,21 +305,19 @@ func TestNewProject(t *testing.T) {
 			ids <- nt.id
 		}()
 
-		p, err := nt.fn(ctx, nt.name, nt.desc, nt.owner)
+		p, err := NewProject(ctx, nt.name, nt.desc, nt.owner)
 		switch {
 		case err != nil && err != nt.err:
 			t.Errorf("%s: unexpected error [%+v]", nt.description, err)
 		case err != nil:
 			break
 		default:
-			var projects Projects
-
 			if p != nt.expected {
 				t.Errorf("%s: expected %+v, got %+v", nt.description, nt.expected, p)
 				break
 			}
 
-			ps, err := projects.FindAll(ctx)
+			ps, err := FindAllProjects(ctx)
 			if err != nil {
 				t.Errorf("%s: unexpected verification error [%+v]", nt.description, err)
 				break
@@ -357,14 +350,12 @@ func TestOpenProjectIssue(t *testing.T) {
 		case err != nil:
 			break
 		default:
-			var issues Issues
-
 			if i != nt.expected {
 				t.Errorf("%s: expected %+v, got %+v", nt.description, nt.expected, i)
 				break
 			}
 
-			is, err := issues.FindByProject(ctx, i.project)
+			is, err := FindIssuesByProject(ctx, i.project)
 			if err != nil {
 				t.Errorf("%s: unexpected verification error [%+v]", nt.description, err)
 				break

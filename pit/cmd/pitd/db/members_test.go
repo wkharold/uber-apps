@@ -18,24 +18,21 @@ type contributesToTest struct {
 
 type findAllMembersTest struct {
 	description string
-	fn          func(Members, context.Context) ([]Member, error)
 	ctxfn       func() context.Context
 	expected    []Member
 	err         error
 }
 
-type findMembersByEmailTest struct {
+type findMemberByEmailTest struct {
 	description string
-	fn          func(Members, context.Context, string) (Member, error)
 	email       string
 	ctxfn       func() context.Context
 	expected    Member
 	err         error
 }
 
-type findMembersByIDTest struct {
+type findMemberByIDTest struct {
 	description string
-	fn          func(Members, context.Context, int) (Member, error)
 	id          int
 	ctxfn       func() context.Context
 	expected    Member
@@ -70,7 +67,6 @@ type memberWatchTest struct {
 
 type newMemberTest struct {
 	description string
-	fn          func(context.Context, string) (Member, error)
 	email       string
 	id          int
 	ctxfn       func() context.Context
@@ -99,21 +95,21 @@ var (
 		{"ContributesTo many projects", alice.ContributesTo, contributions, []Project{pone, pthree}, nil},
 	}
 	findAllMemberTests = []findAllMembersTest{
-		{"FindAll no members", Members.FindAll, emptytables, []Member{}, nil},
-		{"FindAll one member", Members.FindAll, onemember, []Member{bob}, nil},
-		{"FindAll members", Members.FindAll, manymembers, []Member{carol, ted, alice}, nil},
+		{"FindAll no members", emptytables, []Member{}, nil},
+		{"FindAll one member", onemember, []Member{bob}, nil},
+		{"FindAll members", manymembers, []Member{carol, ted, alice}, nil},
 	}
-	findMembersByEmailTests = []findMembersByEmailTest{
-		{"FindByEmail empty tables", Members.FindByEmail, "bob@members.com", emptytables, Member{}, sql.ErrNoRows},
-		{"FindByEmail many members no match", Members.FindByEmail, "fred.c.dobbs@members.com", manymembers, Member{}, sql.ErrNoRows},
-		{"FindByEmail one member", Members.FindByEmail, "bob@members.com", onemember, bob, nil},
-		{"FindByEmail members", Members.FindByEmail, "ted@members.com", manymembers, ted, nil},
+	findMemberByEmailTests = []findMemberByEmailTest{
+		{"FindByEmail empty tables", "bob@members.com", emptytables, Member{}, sql.ErrNoRows},
+		{"FindByEmail many members no match", "fred.c.dobbs@members.com", manymembers, Member{}, sql.ErrNoRows},
+		{"FindByEmail one member", "bob@members.com", onemember, bob, nil},
+		{"FindByEmail members", "ted@members.com", manymembers, ted, nil},
 	}
-	findMembersByIDTests = []findMembersByIDTest{
-		{"FindByID empty tables", Members.FindByID, 1003, emptytables, Member{}, sql.ErrNoRows},
-		{"FindByID many members no match", Members.FindByID, 2001, manymembers, Member{}, sql.ErrNoRows},
-		{"FindByID one member", Members.FindByID, 1003, onemember, bob, nil},
-		{"FindByID members", Members.FindByID, 1005, manymembers, ted, nil},
+	findMemberByIDTests = []findMemberByIDTest{
+		{"FindByID empty tables", 1003, emptytables, Member{}, sql.ErrNoRows},
+		{"FindByID many members no match", 2001, manymembers, Member{}, sql.ErrNoRows},
+		{"FindByID one member", 1003, onemember, bob, nil},
+		{"FindByID members", 1005, manymembers, ted, nil},
 	}
 	joinProjectTests = []joinProjectTest{
 		{"Join non existent project", bob, Project{}, emptytables, []Project{}, ErrNoSuchProject},
@@ -127,9 +123,9 @@ var (
 		{"Watch another issue", alice, issueone, alltheissues, []Issue{issueone, issuefive}, nil},
 	}
 	newMemberTests = []newMemberTest{
-		{"NewMember empty tables", NewMember, "bob@members.com", 1003, emptytables, bob, []Member{bob}, nil},
-		{"NewMember member exists", NewMember, "bob@members.com", 1003, onemember, Member{}, []Member{}, ErrMemberExists},
-		{"NewMember", NewMember, "alice@members.com", 1006, onemember, alice, []Member{bob, alice}, nil},
+		{"NewMember empty tables", "bob@members.com", 1003, emptytables, bob, []Member{bob}, nil},
+		{"NewMember member exists", "bob@members.com", 1003, onemember, Member{}, []Member{}, ErrMemberExists},
+		{"NewMember", "alice@members.com", 1006, onemember, alice, []Member{bob, alice}, nil},
 	}
 	watchingTests = []memberIssuesTest{
 		{"Watching empty tables", bob.Watching, emptytables, []Issue{}, nil},
@@ -263,7 +259,7 @@ func TestFindAllMembers(t *testing.T) {
 		ctx := nt.ctxfn()
 		db := ctx.Value("database").(*sql.DB)
 
-		ms, err := nt.fn(struct{}{}, ctx)
+		ms, err := FindAllMembers(ctx)
 		if err != nil {
 			t.Errorf("%s: unexpected error [%+v]", nt.description, err)
 			dropdb(db)
@@ -280,12 +276,12 @@ func TestFindAllMembers(t *testing.T) {
 	}
 }
 
-func TestFindMembersByEmail(t *testing.T) {
-	for _, nt := range findMembersByEmailTests {
+func TestFindMemberByEmail(t *testing.T) {
+	for _, nt := range findMemberByEmailTests {
 		ctx := nt.ctxfn()
 		db := ctx.Value("database").(*sql.DB)
 
-		p, err := nt.fn(struct{}{}, ctx, nt.email)
+		p, err := FindMemberByEmail(ctx, nt.email)
 		switch {
 		case err != nil && err != nt.err:
 			t.Errorf("%s: unexpected error [%+v]", nt.description, err)
@@ -302,12 +298,12 @@ func TestFindMembersByEmail(t *testing.T) {
 	}
 }
 
-func TestFindMembersByID(t *testing.T) {
-	for _, nt := range findMembersByIDTests {
+func TestFindMemberByID(t *testing.T) {
+	for _, nt := range findMemberByIDTests {
 		ctx := nt.ctxfn()
 		db := ctx.Value("database").(*sql.DB)
 
-		p, err := nt.fn(struct{}{}, ctx, nt.id)
+		p, err := FindMemberByID(ctx, nt.id)
 		switch {
 		case err != nil && err != nt.err:
 			t.Errorf("%s: unexpected error [%+v]", nt.description, err)
@@ -334,21 +330,19 @@ func TestNewMembers(t *testing.T) {
 			ids <- nt.id
 		}()
 
-		m, err := nt.fn(ctx, nt.email)
+		m, err := NewMember(ctx, nt.email)
 		switch {
 		case err != nil && err != nt.err:
 			t.Errorf("%s: unexpected error [%+v]", nt.description, err)
 		case err != nil:
 			break
 		default:
-			var members Members
-
 			if m != nt.expected {
 				t.Errorf("%s: expected %+v, got %+v", nt.description, nt.expected, m)
 				break
 			}
 
-			ms, err := members.FindAll(ctx)
+			ms, err := FindAllMembers(ctx)
 			if err != nil {
 				t.Errorf("%s: unexpected verification error [%+v]", nt.description, err)
 				break

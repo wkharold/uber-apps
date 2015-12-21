@@ -21,7 +21,7 @@ type Issue struct {
 type Issues struct{}
 
 // FindAll retrieves a list of all the issues in the repository.
-func (Issues) FindAll(ctx context.Context) ([]Issue, error) {
+func FindAllIssues(ctx context.Context) ([]Issue, error) {
 	db := databaseFromContext(ctx)
 
 	rows, err := db.Query("SELECT issues.ID, issues.Name, issues.Description, issues.Priority, issues.Status, issues.Project, members.Email FROM issues, members WHERE issues.Reporter == members.ID ORDER BY issues.ID;")
@@ -33,7 +33,7 @@ func (Issues) FindAll(ctx context.Context) ([]Issue, error) {
 }
 
 // FindByID retrieves the issue with the given id.
-func (Issues) FindByID(ctx context.Context, id int) (Issue, error) {
+func FindIssueByID(ctx context.Context, id int) (Issue, error) {
 	db := databaseFromContext(ctx)
 	result := Issue{}
 
@@ -46,7 +46,7 @@ func (Issues) FindByID(ctx context.Context, id int) (Issue, error) {
 }
 
 // FindByProject retrieves a list of all the issues associated with the given project.
-func (Issues) FindByProject(ctx context.Context, projectid int) ([]Issue, error) {
+func FindIssuesByProject(ctx context.Context, projectid int) ([]Issue, error) {
 	db := databaseFromContext(ctx)
 
 	rows, err := db.Query("SELECT issues.ID, issues.Name, issues.Description, issues.Priority, issues.Status, issues.Project, members.Email FROM issues, members WHERE issues.Reporter == members.ID AND issues.Project == $1 ORDER BY issues.ID;", projectid)
@@ -58,7 +58,7 @@ func (Issues) FindByProject(ctx context.Context, projectid int) ([]Issue, error)
 }
 
 // FindByReport retrieves a list of all the issues reported by the specified reporter.
-func (Issues) FindByReporter(ctx context.Context, reporter string) ([]Issue, error) {
+func FindIssuesByReporter(ctx context.Context, reporter string) ([]Issue, error) {
 	db := databaseFromContext(ctx)
 
 	rows, err := db.Query("SELECT issues.ID, issues.Name, issues.Description, issues.Priority, issues.Status, issues.Project, members.Email FROM issues, members WHERE issues.Reporter == members.ID AND members.Email == $1 ORDER BY issues.ID;", reporter)
@@ -70,7 +70,7 @@ func (Issues) FindByReporter(ctx context.Context, reporter string) ([]Issue, err
 }
 
 // FindByPriority retrieves a list of all the issues known to the PIT system with the given priority.
-func (Issues) FindByPriority(ctx context.Context, priority int) ([]Issue, error) {
+func FindIssuesByPriority(ctx context.Context, priority int) ([]Issue, error) {
 	db := databaseFromContext(ctx)
 
 	rows, err := db.Query("SELECT issues.ID, issues.Name, issues.Description, issues.Priority, issues.Status, issues.Project, members.Email FROM issues, members WHERE issues.Reporter == members.ID AND issues.Priority == $1 ORDER BY issues.ID;", priority)
@@ -82,7 +82,7 @@ func (Issues) FindByPriority(ctx context.Context, priority int) ([]Issue, error)
 }
 
 // FindByStatus retrieves a list of all the issues know to the PIT system with the specified status.
-func (Issues) FindByStatus(ctx context.Context, status string) ([]Issue, error) {
+func FindIssuesByStatus(ctx context.Context, status string) ([]Issue, error) {
 	db := databaseFromContext(ctx)
 
 	rows, err := db.Query("SELECT issues.ID, issues.Name, issues.Description, issues.Priority, issues.Status, issues.Project, members.Email FROM issues, members WHERE issues.Reporter == members.ID AND issues.Status == $1 ORDER BY issues.ID;", status)

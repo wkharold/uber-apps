@@ -113,7 +113,7 @@ func (p Project) AddMember(ctx context.Context, member Member) error {
 }
 
 // FindAll retrieves a list of all the projects in the repository.
-func (Projects) FindAll(ctx context.Context) ([]Project, error) {
+func FindAllProjects(ctx context.Context) ([]Project, error) {
 	db := databaseFromContext(ctx)
 
 	rows, err := db.Query("SELECT projects.ID, projects.Name, projects.Description, members.Email FROM projects, members WHERE projects.Owner == members.ID ORDER BY projects.ID")
@@ -125,7 +125,7 @@ func (Projects) FindAll(ctx context.Context) ([]Project, error) {
 }
 
 // FindByOwner retrieves a list of all projects owned by the specified owner
-func (Projects) FindByOwner(ctx context.Context, owner string) ([]Project, error) {
+func FindProjectsByOwner(ctx context.Context, owner string) ([]Project, error) {
 	db := databaseFromContext(ctx)
 
 	rows, err := db.Query("SELECT projects.ID, projects.Name, projects.Description, members.Email FROM projects, members WHERE projects.Owner == members.ID AND members.Email == $1 ORDER BY projects.ID;", owner)
@@ -137,7 +137,7 @@ func (Projects) FindByOwner(ctx context.Context, owner string) ([]Project, error
 }
 
 // FindByID retrieves the project with the given ID
-func (Projects) FindByID(ctx context.Context, id int) (Project, error) {
+func FindProjectByID(ctx context.Context, id int) (Project, error) {
 	db := databaseFromContext(ctx)
 	result := Project{}
 
@@ -150,7 +150,7 @@ func (Projects) FindByID(ctx context.Context, id int) (Project, error) {
 }
 
 // FindByName retrieves the project with the given name
-func (Projects) FindByName(ctx context.Context, name string) (Project, error) {
+func FindProjectByName(ctx context.Context, name string) (Project, error) {
 	db := databaseFromContext(ctx)
 	result := Project{}
 
