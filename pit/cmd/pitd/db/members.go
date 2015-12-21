@@ -47,7 +47,7 @@ func NewMember(ctx context.Context, email string) (Member, error) {
 }
 
 // FindAll retreives a list of all the project team members in the repository.
-func (Members) FindAll(ctx context.Context) ([]Member, error) {
+func FindAllMembers(ctx context.Context) ([]Member, error) {
 	db := databaseFromContext(ctx)
 
 	rows, err := db.Query("SELECT ID, Email FROM members ORDER BY ID;")
@@ -59,7 +59,7 @@ func (Members) FindAll(ctx context.Context) ([]Member, error) {
 }
 
 // FindByEmail retrieves the project team member with the given email address.
-func (Members) FindByEmail(ctx context.Context, email string) (Member, error) {
+func FindMemberByEmail(ctx context.Context, email string) (Member, error) {
 	db := databaseFromContext(ctx)
 	result := Member{}
 
@@ -72,7 +72,7 @@ func (Members) FindByEmail(ctx context.Context, email string) (Member, error) {
 }
 
 // FindByID retrieves the project team member with the given id.
-func (Members) FindByID(ctx context.Context, memberid int) (Member, error) {
+func FindMemberByID(ctx context.Context, memberid int) (Member, error) {
 	db := databaseFromContext(ctx)
 	result := Member{}
 
