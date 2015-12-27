@@ -10,6 +10,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/uber-apps/pit/cmd/pitd/httpctx"
 	"github.com/uber-apps/pit/cmd/pitd/testdata"
 	"golang.org/x/net/context"
 )
@@ -21,7 +22,7 @@ const (
 
 type projecttest struct {
 	description string
-	hfn         ContextHandlerFunc
+	hfn         httpctx.ContextHandlerFunc
 	req         string
 	method      string
 	payload     string

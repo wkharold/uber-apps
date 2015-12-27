@@ -13,6 +13,8 @@ import (
 
 	"github.com/gorilla/handlers"
 	"github.com/gorilla/mux"
+	"github.com/uber-apps/pit/cmd/pitd/httpctx"
+	"github.com/uber-apps/pit/cmd/pitd/uber"
 	"golang.org/x/net/context"
 )
 
@@ -20,63 +22,6 @@ const (
 	DEBUG = 0
 	INFO  = 1
 )
-
-// ContextHandler defines the ServeHTTPWithContext method. Types that implement ContextHandler
-// can be registered, via a ContextAdapter, to serve a particular path or subtree in an HTTP server.
-type ContextHandler interface {
-	ServeHTTPWithContext(context.Context, http.ResponseWriter, *http.Request)
-}
-
-// ContextHandlerFunc is an adapter to allow the use of ordinary functions as, context aware, HTTP
-// handlers. If f is a function with the appropriate signature, ContextHandlerFunc(f) is a ContextHandler
-// tha calls f.
-type ContextHandlerFunc func(context.Context, http.ResponseWriter, *http.Request)
-
-// ServeHTTPWithContext calls h(ctx, w, req).
-func (h ContextHandlerFunc) ServeHTTPWithContext(ctx context.Context, w http.ResponseWriter, req *http.Request) {
-	h(ctx, w, req)
-}
-
-// ContextAdapter associates a Context and a ContextHandler. Because it implements the http.Handler interface
-// ContextAdapter instances can be registered to serve a particular path or subtree in an HTTP server.
-type ContextAdapter struct {
-	ctx     context.Context
-	handler ContextHandler
-}
-
-// ServeHTTP calls the handler's ServeHTTPWithContext method with the associated Context.
-func (ca ContextAdapter) ServeHTTP(w http.ResponseWriter, req *http.Request) {
-	ca.handler.ServeHTTPWithContext(ca.ctx, w, req)
-}
-
-// udata represents the individual data elements of an Uber hypermedia document.
-type udata struct {
-	ID         string   `json:"id,omitempty"`
-	Name       string   `json:"name,omitempty"`
-	Rel        []string `json:"rel,omitempty"`
-	Label      string   `json:"label,omitempty"`
-	URL        string   `json:"url,omitempty"`
-	Templated  bool     `json:"templated,omitempty"`
-	Action     string   `json:"action,omitempty"`
-	Transclude bool     `json:"transclude,omitempty"`
-	Model      string   `json:"model,omitempty"`
-	Sending    string   `json:"sending,omitempty"`
-	Accepting  []string `json:"accepting,omitempty"`
-	Value      string   `json:"value,omitempty"`
-	Data       []udata  `json:"data,omitempty"`
-}
-
-// ubody is the body of an Uber hypermedia document.
-type ubody struct {
-	Version string  `json:"version"`
-	Data    []udata `json:"data,omitempty"`
-	Error   []udata `json:"error,omitempty"`
-}
-
-// udoc represents an Uber hypermedia document.
-type udoc struct {
-	Uber ubody `json:"uber"`
-}
 
 // leveledLogger combines a std log.Logger with a level at which to log. Possible levels
 // are DEBUG, things that matter to developers, and INFO, things that matter to users.
@@ -100,7 +45,7 @@ func main() {
 
 func router() *mux.Router {
 	r := mux.NewRouter()
-	r.Handle("/_loglevel", http.Handler(ContextAdapter{ctx: pitctx, handler: ContextHandlerFunc(loglevel)})).Methods("POST")
+	r.Handle("/_loglevel", http.Handler(httpctx.ContextAdapter{Ctx: pitctx, Handler: httpctx.ContextHandlerFunc(loglevel)})).Methods("POST")
 	return r
 }
 
@@ -143,7 +88,7 @@ func loglevel(ctx context.Context, w http.ResponseWriter, req *http.Request) {
 
 // mkError creates an Uber hypermedia document that represents an error.
 func mkError(name, rel, value string) []byte {
-	bs, err := json.Marshal(udoc{ubody{Version: "1.0", Error: []udata{udata{Name: name, Rel: []string{rel}, Value: value}}}})
+	bs, err := json.Marshal(uber.Doc{uber.Body{Version: "1.0", Error: []uber.Data{uber.Data{Name: name, Rel: []string{rel}, Value: value}}}})
 	if err != nil {
 		panic(err)
 	}

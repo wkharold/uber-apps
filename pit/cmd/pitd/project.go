@@ -7,6 +7,8 @@ import (
 	"net/http"
 	"os"
 
+	"github.com/uber-apps/pit/cmd/pitd/uber"
+
 	"golang.org/x/net/context"
 )
 
@@ -60,45 +62,45 @@ func projectlist(ctx context.Context, w http.ResponseWriter, req *http.Request) 
 }
 
 func (ps projects) MarshalUber() ([]byte, error) {
-	links := udata{
+	links := uber.Data{
 		ID: "links",
-		Data: []udata{
-			udata{
+		Data: []uber.Data{
+			uber.Data{
 				ID:     "alps",
 				Rel:    []string{"profile"},
 				URL:    "/pit-alps.xml",
 				Action: "read",
-				Data:   []udata{},
+				Data:   []uber.Data{},
 			},
-			udata{
+			uber.Data{
 				ID:     "list",
 				Name:   "links",
 				Rel:    []string{"collection"},
 				URL:    "/projects/",
 				Action: "read",
-				Data:   []udata{},
+				Data:   []uber.Data{},
 			},
-			udata{
+			uber.Data{
 				ID:        "search",
 				Name:      "links",
 				Rel:       []string{"search"},
 				URL:       "/projects/search{?name}",
 				Templated: true,
-				Data:      []udata{},
+				Data:      []uber.Data{},
 			},
-			udata{
+			uber.Data{
 				ID:     "new",
 				Name:   "links",
 				Rel:    []string{"add"},
 				URL:    "/projects/",
 				Action: "append",
 				Model:  "n={name}&d={description}",
-				Data:   []udata{},
+				Data:   []uber.Data{},
 			},
 		},
 	}
 
-	projlist := udata{ID: "projects", Data: []udata{}}
+	projlist := uber.Data{ID: "projects", Data: []uber.Data{}}
 
-	return json.Marshal(udoc{ubody{Version: "1.0", Data: []udata{links, projlist}, Error: []udata{}}})
+	return json.Marshal(uber.Doc{uber.Body{Version: "1.0", Data: []uber.Data{links, projlist}, Error: []uber.Data{}}})
 }
