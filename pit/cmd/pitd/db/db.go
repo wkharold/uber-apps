@@ -34,7 +34,9 @@ var (
 )
 
 func init() {
-	qldb, err := sql.Open("ql", "memory://pit.db")
+	var err error
+
+	qldb, err = sql.Open("ql", "memory://pit.db")
 	if err != nil {
 		panic(fmt.Sprintf("cannot create database instance: [%+v]", err))
 	}
