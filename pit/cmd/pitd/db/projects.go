@@ -14,9 +14,6 @@ type Project struct {
 	owner       string
 }
 
-// Projects is the collection of all the projects managed by the PIT system.
-type Projects struct{}
-
 // NewProject creates a new project with the specified name, description, and owner
 func NewProject(ctx context.Context, name, description, owner string) (Project, error) {
 	db := databaseFromContext(ctx)
@@ -109,6 +106,7 @@ func (p Project) AddMember(ctx context.Context, member Member) error {
 	}
 
 	added = true
+
 	return nil
 }
 

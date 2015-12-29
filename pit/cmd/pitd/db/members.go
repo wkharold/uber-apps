@@ -12,36 +12,42 @@ type Member struct {
 	email string
 }
 
-// Members is the collection of all the project team members known to the PIT system.
-type Members struct{}
-
 // NewMember creates a new member associated with the specified email address.
 func NewMember(ctx context.Context, email string) (Member, error) {
 	db := databaseFromContext(ctx)
 	ids := idsChanFromContext(ctx)
+
+	created := false
+
 	id := <-ids
 
 	tx, err := db.Begin()
 	if err != nil {
 		return Member{}, err
 	}
+	defer func() {
+		switch created {
+		case true:
+			tx.Commit()
+		case false:
+			tx.Rollback()
+		}
+	}()
 
 	var memail string
 	var mid int
 
 	err = tx.QueryRow("SELECT ID, Email FROM members WHERE Email == $1", email).Scan(&mid, &memail)
 	if err != sql.ErrNoRows {
-		tx.Rollback()
 		return Member{}, ErrMemberExists
 	}
 
 	_, err = tx.Exec("INSERT INTO members VALUES ($1, $2)", id, email)
 	if err != nil {
-		tx.Rollback()
 		return Member{}, err
 	}
 
-	tx.Commit()
+	created = true
 
 	return Member{id, email}, nil
 }
@@ -185,6 +191,7 @@ func (m Member) Join(ctx context.Context, p Project) error {
 	}
 
 	joined = true
+
 	return nil
 }
 
@@ -247,6 +254,7 @@ func (m Member) Watch(ctx context.Context, issue Issue) error {
 	}
 
 	watching = true
+
 	return nil
 }
 
