@@ -17,9 +17,6 @@ type Issue struct {
 	reporter    string
 }
 
-// Issues is the collection of all of the reported issues known to the PIT system.
-type Issues struct{}
-
 // FindAll retrieves a list of all the issues in the repository.
 func FindAllIssues(ctx context.Context) ([]Issue, error) {
 	db := databaseFromContext(ctx)
