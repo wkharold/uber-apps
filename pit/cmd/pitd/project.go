@@ -5,6 +5,7 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"strconv"
 
 	"github.com/uber-apps/pit/cmd/pitd/db"
 	"github.com/uber-apps/pit/cmd/pitd/uber"
@@ -99,5 +100,30 @@ func projectlist(ctx context.Context, w http.ResponseWriter, req *http.Request) 
 }
 
 func (ps projects) MarshalUBER() (uber.Data, error) {
-	return uber.Data{ID: "projects", Data: []uber.Data{}}, nil
+	summaries := []uber.Data{}
+
+	for _, p := range ps {
+		s := uber.Data{
+			ID:   strconv.Itoa(p.ID()),
+			Name: p.Name(),
+			Rel:  []string{"self"},
+			URL:  fmt.Sprintf("/project/%d", p.ID()),
+			Data: []uber.Data{
+				{
+					Rel:    []string{"add"},
+					URL:    fmt.Sprintf("/project/%d/issues", p.ID()),
+					Action: "append",
+					Model:  "n={name}&d={description}&p={priority}&r={reporter}",
+				},
+				{
+					Rel:       []string{"search"},
+					URL:       fmt.Sprintf("/project/%d/search{?name}", p.ID()),
+					Templated: true,
+				},
+			},
+		}
+		summaries = append(summaries, s)
+	}
+
+	return uber.Data{ID: "projects", Data: summaries}, nil
 }

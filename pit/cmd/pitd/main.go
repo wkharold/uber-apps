@@ -46,6 +46,7 @@ func main() {
 func router() *mux.Router {
 	r := mux.NewRouter()
 	r.Handle("/_loglevel", http.Handler(httpctx.ContextAdapter{Ctx: pitctx, Handler: httpctx.ContextHandlerFunc(loglevel)})).Methods("POST")
+	r.Handle("/projects", http.Handler(httpctx.ContextAdapter{Ctx: pitctx, Handler: httpctx.ContextHandlerFunc(projectlist)})).Methods("GET")
 	return r
 }
 

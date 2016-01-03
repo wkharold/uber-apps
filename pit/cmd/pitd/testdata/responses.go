@@ -94,16 +94,14 @@ var (
 					"data":
 					[
 						{
-							"id": 101,
+							"id": "101",
 							"name": "project one",
-							"rel": [ "project" ],
+							"rel": [ "self" ],
+							"url": "/project/101",
 							"data":
 							[
-								{ "rel": [ "issue" ], "url": "/projects/issues", "action": "append", "model": "n={name}\u0026d={description}\u0026p={priority}\u0026rr={reporter}" },
-								{ "name": "id", "value": 101 },
-								{ "name": "name", "value": "pone" },
-								{ "name": "description", "value": "first test project" },
-								{ "name": "owner", "value": "owner@test.net" }
+								{ "rel": [ "add" ], "url": "/project/101/issues", "action": "append", "model": "n={name}\u0026d={description}\u0026p={priority}\u0026r={reporter}" },
+								{ "rel": [ "search" ], "url": "/project/101/search{?name}", "templated": true}
 							]
 						}
 					]
