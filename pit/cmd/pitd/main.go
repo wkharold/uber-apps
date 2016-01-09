@@ -2,7 +2,6 @@
 package main
 
 import (
-	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	"log"
@@ -89,9 +88,9 @@ func loglevel(ctx context.Context, w http.ResponseWriter, req *http.Request) {
 
 // mkError creates an Uber hypermedia document that represents an error.
 func mkError(name, rel, value string) []byte {
-	bs, err := json.Marshal(uber.Doc{uber.Body{Version: "1.0", Error: []uber.Data{uber.Data{Name: name, Rel: []string{rel}, Value: value}}}})
+	ubererr, err := uber.MarshalError(uber.Data{Name: name, Rel: []string{rel}, Value: value})
 	if err != nil {
 		panic(err)
 	}
-	return bs
+	return ubererr
 }

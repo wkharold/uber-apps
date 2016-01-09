@@ -50,11 +50,30 @@ func (ls links) MarshalUBER() (uber.Data, error) {
 				Rel:    []string{"add"},
 				URL:    "/projects/",
 				Action: "append",
-				Model:  "n={name}&d={description}",
+				Model:  "n={name}&d={description}&o={owner}",
 				Data:   []uber.Data{},
 			},
 		},
 	}, nil
+}
+
+func project(ctx context.Context, w http.ResponseWriter, req *http.Request) {
+	logger, ok := ctx.Value("logger").(*leveledLogger)
+	if !ok {
+		devnull, _ := os.OpenFile("/dev/null", os.O_WRONLY, os.ModePerm)
+		logger = &leveledLogger{logger: log.New(devnull, "nulllogger", log.LstdFlags), level: INFO}
+	}
+
+	if logger.level == DEBUG {
+		logger.logger.Println("project: enter")
+	}
+
+	w.WriteHeader(http.StatusNotImplemented)
+	w.Write(mkError("ServerError", "reason", "unimplemented handler"))
+
+	if logger.level == DEBUG {
+		logger.logger.Println("project: exit")
+	}
 }
 
 func projectlist(ctx context.Context, w http.ResponseWriter, req *http.Request) {

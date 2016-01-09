@@ -28,25 +28,33 @@ type projecttest struct {
 	req         string
 	method      string
 	payload     string
-	ctx         context.Context
+	ctxfn       func() context.Context
 	rc          int
 	body        string
 }
 
 var ptes = []projecttest{
-	{"empty project list", projectlist, "/projects", GET, "", noprojects(), 200, testdata.EmptyProjectList},
-	{"single project list", projectlist, "/projects", GET, "", oneproject(), 200, testdata.OneProjectList},
+	{"empty project list", projectlist, "/projects", GET, "", noprojects, 200, testdata.EmptyProjectList},
+	{"single project list", projectlist, "/projects", GET, "", oneproject, 200, testdata.OneProjectList},
+	{"multi project list", projectlist, "/projects", GET, "", multiproject, 200, testdata.MultiProjectList},
+	{"get unknown project", project, "/project/001", GET, "", multiproject, 401, testdata.UnknownProjectError},
+	{"get the only project", project, "/project/101", GET, "", oneproject, 200, testdata.Project101},
+	{"get a project", project, "/project/102", GET, "", multiproject, 200, testdata.Project102},
 }
 
 func TestProjects(t *testing.T) {
 	for _, pt := range ptes {
+		fmt.Printf(">>>>>>>> Running: %s\n", pt.description)
+
+		ctx := pt.ctxfn()
+
 		req, err := http.NewRequest(pt.method, pt.req, strings.NewReader(pt.payload))
 		if err != nil {
 			t.Error(err)
 		}
 
 		w := httptest.NewRecorder()
-		pt.hfn(pt.ctx, w, req)
+		pt.hfn(ctx, w, req)
 
 		if w.Code != pt.rc {
 			t.Errorf("%s: Response Code mismatch: expected %d, got %d", pt.description, pt.rc, w.Code)
@@ -63,6 +71,9 @@ func TestProjects(t *testing.T) {
 			t.Errorf("%s: Body mismatch:\nexpected %s\ngot      %s", pt.description, string(body.Bytes()), w.Body.String())
 			continue
 		}
+
+		db := ctx.Value("database").(*sql.DB)
+		dropdb(db)
 	}
 }
 
@@ -94,6 +105,35 @@ func equaljson(p, q []byte) bool {
 	}
 
 	return true
+}
+
+func multiproject() context.Context {
+	db := createdb("multiproject")
+
+	ctx := context.Background()
+	ctx = context.WithValue(ctx, "database", db)
+	ctx = context.WithValue(ctx, "ids-chan", make(chan int))
+	ctx = context.WithValue(ctx, "logger", &leveledLogger{logger: log.New(os.Stdout, "pittest: ", log.LstdFlags), level: DEBUG})
+
+	tx, err := db.Begin()
+	if err != nil {
+		panic(fmt.Sprintf("cannot create a transaction to setup the database: [%+v]", err))
+	}
+
+	if _, err := tx.Exec(`INSERT INTO projects VALUES 
+	                      (101, "project one", "first test project", 1001),
+	                      (102, "project two", "second test project", 1001),
+						  (103, "project three", "third test project", 1002);;`); err != nil {
+		panic(fmt.Sprintf("cannot setup projects table: [%+v]", err))
+	}
+
+	if _, err := tx.Exec(`INSERT INTO members VALUES (1001, "owner@test.net"), (1002, "owner@test.io");`); err != nil {
+		panic(fmt.Sprintf("cannot setup members table: [%+v]", err))
+	}
+
+	tx.Commit()
+
+	return ctx
 }
 
 func noprojects() context.Context {
@@ -189,33 +229,33 @@ func mkTables(db *sql.DB) error {
 	}
 
 	// Entity tables: projects, issues, members
-	if _, err = tx.Exec("CREATE TABLE projects (ID int, Name string, Description string, Owner int);"); err != nil {
+	if _, err = tx.Exec("CREATE TABLE IF NOT EXISTS projects (ID int, Name string, Description string, Owner int);"); err != nil {
 		tx.Rollback()
 		return err
 	}
 
-	if _, err = tx.Exec("CREATE TABLE issues (ID int, Name string,  Description string, Priority int, Status string, Project int, Reporter int);"); err != nil {
+	if _, err = tx.Exec("CREATE TABLE IF NOT EXISTS issues (ID int, Name string,  Description string, Priority int, Status string, Project int, Reporter int);"); err != nil {
 		tx.Rollback()
 		return err
 	}
 
-	if _, err = tx.Exec("CREATE TABLE members (ID int, Email string);"); err != nil {
+	if _, err = tx.Exec("CREATE TABLE IF NOT EXISTS members (ID int, Email string);"); err != nil {
 		tx.Rollback()
 		return err
 	}
 
 	// Association tables: contributors, assignments, watchers
-	if _, err = tx.Exec("CREATE TABLE contributors (PID int, MID int);"); err != nil {
+	if _, err = tx.Exec("CREATE TABLE IF NOT EXISTS contributors (PID int, MID int);"); err != nil {
 		tx.Rollback()
 		return err
 	}
 
-	if _, err = tx.Exec("CREATE TABLE assignments (MID int, IID int);"); err != nil {
+	if _, err = tx.Exec("CREATE TABLE IF NOT EXISTS assignments (MID int, IID int);"); err != nil {
 		tx.Rollback()
 		return err
 	}
 
-	if _, err = tx.Exec("CREATE TABLE watchers (MID int, IID int);"); err != nil {
+	if _, err = tx.Exec("CREATE TABLE IF NOT EXISTS watchers (MID int, IID int);"); err != nil {
 		tx.Rollback()
 		return err
 	}
