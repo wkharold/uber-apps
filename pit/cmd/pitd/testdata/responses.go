@@ -229,7 +229,7 @@ var (
 							"rel": [ "add" ],
 							"url": "/projects/",
 							"action": "append",
-							"model": "n={name}\u0026d={description}\u0026do={owner}"
+							"model": "n={name}\u0026d={description}\u0026o={owner}"
 						}
 					]
 				},
@@ -247,7 +247,7 @@ var (
 								{"rel": [ "add" ], "url": "/project/101/issues", "action": "append", "model": "n={name}\u0026d={description}\u0026p={priority}\u0026r={reporter}"},
 								{"rel": [ "search" ], "url": "/project/101/search{?name}", "templated": true},
 								{"name": "description", "value": "first test project"},
-								{"name": "owner", "value": "owner@test.net"},
+								{"name": "owner", "value": "owner@test.net"}
 							]
 						}
 					]
@@ -292,7 +292,7 @@ var (
 							"rel": [ "add" ],
 							"url": "/projects/",
 							"action": "append",
-							"model": "n={name}\u0026d={description}\u0026do={owner}"
+							"model": "n={name}\u0026d={description}\u0026o={owner}"
 						}
 					]
 				},
@@ -310,7 +310,7 @@ var (
 								{"rel": [ "add" ], "url": "/project/102/issues", "action": "append", "model": "n={name}\u0026d={description}\u0026p={priority}\u0026r={reporter}"},
 								{"rel": [ "search" ], "url": "/project/102/search{?name}", "templated": true},
 								{"name": "description", "value": "second test project"},
-								{"name": "owner", "value": "owner@test.net"},
+								{"name": "owner", "value": "owner@test.net"}
 							]
 						}
 					]
@@ -327,7 +327,7 @@ var (
 			{
 				"data":
 				[
-					{"name": "project", "rel": ["reason"], "value": "No such project"}
+					{"name": "RequestFailed", "rel": ["reason"], "value": "No project exists with specified ID: [1]"}
 				]
 			}
 		}

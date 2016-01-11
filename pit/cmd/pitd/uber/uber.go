@@ -3,7 +3,7 @@ package uber
 
 import "encoding/json"
 
-// udata represents the individual data elements of an Uber hypermedia document.
+// Data represents the individual data elements of an Uber hypermedia document.
 type Data struct {
 	ID         string   `json:"id,omitempty"`
 	Name       string   `json:"name,omitempty"`
@@ -20,16 +20,26 @@ type Data struct {
 	Data       []Data   `json:"data,omitempty"`
 }
 
-// ubody is the body of an Uber hypermedia document.
+// Body is the body of an Uber hypermedia document.
 type Body struct {
 	Version string `json:"version"`
 	Data    []Data `json:"data,omitempty"`
-	Error   []Data `json:"error,omitempty"`
 }
 
-// udoc represents an Uber hypermedia document.
+// Doc represents an Uber hypermedia document.
 type Doc struct {
 	Uber Body `json:"uber"`
+}
+
+// ErrorBody represents the body of an UBER error.
+type ErrorBody struct {
+	Version string `json:"version"`
+	Error   Data   `json:"error"`
+}
+
+// Error represents an UBER error document.
+type Error struct {
+	Uber ErrorBody `json:"uber"`
 }
 
 // Marshaler is the interface implemented by things that can marshal themselves into UBER data.
@@ -51,7 +61,7 @@ func Marshal(marshalers ...Marshaler) ([]byte, error) {
 		bodydata = append(bodydata, data)
 	}
 
-	return json.Marshal(Doc{Body{Version: "1.0", Data: bodydata, Error: []Data{}}})
+	return json.Marshal(Doc{Body{Version: "1.0", Data: bodydata}})
 }
 
 // MarshalError renders the JSON representation of an UBER error that includes the specified
@@ -63,5 +73,5 @@ func MarshalError(data ...Data) ([]byte, error) {
 		bodydata = append(bodydata, d)
 	}
 
-	return json.Marshal(Doc{Body{Version: "1.0", Data: []Data{}, Error: bodydata}})
+	return json.Marshal(Error{ErrorBody{Version: "1.0", Error: Data{Data: bodydata}}})
 }

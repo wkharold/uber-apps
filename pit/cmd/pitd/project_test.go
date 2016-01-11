@@ -37,15 +37,13 @@ var ptes = []projecttest{
 	{"empty project list", projectlist, "/projects", GET, "", noprojects, 200, testdata.EmptyProjectList},
 	{"single project list", projectlist, "/projects", GET, "", oneproject, 200, testdata.OneProjectList},
 	{"multi project list", projectlist, "/projects", GET, "", multiproject, 200, testdata.MultiProjectList},
-	{"get unknown project", project, "/project/001", GET, "", multiproject, 401, testdata.UnknownProjectError},
-	{"get the only project", project, "/project/101", GET, "", oneproject, 200, testdata.Project101},
-	{"get a project", project, "/project/102", GET, "", multiproject, 200, testdata.Project102},
+	{"get unknown project", getproject, "/project/001", GET, "", multiproject, http.StatusNotFound, testdata.UnknownProjectError},
+	{"get the only project", getproject, "/project/101", GET, "", oneproject, 200, testdata.Project101},
+	{"get a project", getproject, "/project/102", GET, "", multiproject, 200, testdata.Project102},
 }
 
 func TestProjects(t *testing.T) {
 	for _, pt := range ptes {
-		fmt.Printf(">>>>>>>> Running: %s\n", pt.description)
-
 		ctx := pt.ctxfn()
 
 		req, err := http.NewRequest(pt.method, pt.req, strings.NewReader(pt.payload))
@@ -54,7 +52,7 @@ func TestProjects(t *testing.T) {
 		}
 
 		w := httptest.NewRecorder()
-		pt.hfn(ctx, w, req)
+		router(ctx).ServeHTTP(w, req)
 
 		if w.Code != pt.rc {
 			t.Errorf("%s: Response Code mismatch: expected %d, got %d", pt.description, pt.rc, w.Code)
@@ -113,7 +111,7 @@ func multiproject() context.Context {
 	ctx := context.Background()
 	ctx = context.WithValue(ctx, "database", db)
 	ctx = context.WithValue(ctx, "ids-chan", make(chan int))
-	ctx = context.WithValue(ctx, "logger", &leveledLogger{logger: log.New(os.Stdout, "pittest: ", log.LstdFlags), level: DEBUG})
+	ctx = context.WithValue(ctx, "logger", &leveledLogger{logger: log.New(os.Stdout, "pittest: ", log.LstdFlags), level: INFO})
 
 	tx, err := db.Begin()
 	if err != nil {
@@ -142,7 +140,7 @@ func noprojects() context.Context {
 	ctx := context.Background()
 	ctx = context.WithValue(ctx, "database", db)
 	ctx = context.WithValue(ctx, "ids-chan", make(chan int))
-	ctx = context.WithValue(ctx, "logger", &leveledLogger{logger: log.New(os.Stdout, "pittest: ", log.LstdFlags), level: DEBUG})
+	ctx = context.WithValue(ctx, "logger", &leveledLogger{logger: log.New(os.Stdout, "pittest: ", log.LstdFlags), level: INFO})
 	return ctx
 }
 
@@ -152,7 +150,7 @@ func oneproject() context.Context {
 	ctx := context.Background()
 	ctx = context.WithValue(ctx, "database", db)
 	ctx = context.WithValue(ctx, "ids-chan", make(chan int))
-	ctx = context.WithValue(ctx, "logger", &leveledLogger{logger: log.New(os.Stdout, "pittest: ", log.LstdFlags), level: DEBUG})
+	ctx = context.WithValue(ctx, "logger", &leveledLogger{logger: log.New(os.Stdout, "pittest: ", log.LstdFlags), level: INFO})
 
 	tx, err := db.Begin()
 	if err != nil {

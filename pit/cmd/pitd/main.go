@@ -35,17 +35,18 @@ var (
 
 func init() {
 	pitctx = context.WithValue(pitctx, "logger", &leveledLogger{logger: log.New(os.Stdout, "pitd: ", log.LstdFlags), level: INFO})
-	http.Handle("/", handlers.CompressHandler(handlers.LoggingHandler(os.Stdout, router())))
+	http.Handle("/", handlers.CompressHandler(handlers.LoggingHandler(os.Stdout, router(pitctx))))
 }
 
 func main() {
 	http.ListenAndServe(":3006", nil)
 }
 
-func router() *mux.Router {
+func router(ctx context.Context) *mux.Router {
 	r := mux.NewRouter()
-	r.Handle("/_loglevel", http.Handler(httpctx.ContextAdapter{Ctx: pitctx, Handler: httpctx.ContextHandlerFunc(loglevel)})).Methods("POST")
-	r.Handle("/projects", http.Handler(httpctx.ContextAdapter{Ctx: pitctx, Handler: httpctx.ContextHandlerFunc(projectlist)})).Methods("GET")
+	r.Handle("/_loglevel", http.Handler(httpctx.ContextAdapter{Ctx: ctx, Handler: httpctx.ContextHandlerFunc(loglevel)})).Methods("POST")
+	r.Handle("/projects", http.Handler(httpctx.ContextAdapter{Ctx: ctx, Handler: httpctx.ContextHandlerFunc(projectlist)})).Methods("GET")
+	r.Handle("/project/{id}", http.Handler(httpctx.ContextAdapter{Ctx: ctx, Handler: httpctx.ContextHandlerFunc(getproject)})).Methods("GET")
 	return r
 }
 
