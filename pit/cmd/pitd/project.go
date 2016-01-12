@@ -3,9 +3,7 @@ package main
 import (
 	"database/sql"
 	"fmt"
-	"log"
 	"net/http"
-	"os"
 	"strconv"
 
 	"github.com/gorilla/mux"
@@ -61,31 +59,21 @@ func (ls links) MarshalUBER() (uber.Data, error) {
 }
 
 func getproject(ctx context.Context, w http.ResponseWriter, req *http.Request) {
-	logger, ok := ctx.Value("logger").(*leveledLogger)
-	if !ok {
-		devnull, _ := os.OpenFile("/dev/null", os.O_WRONLY, os.ModePerm)
-		logger = &leveledLogger{logger: log.New(devnull, "nulllogger", log.LstdFlags), level: INFO}
-	}
+	logger := loggerFromContext(ctx)
 
-	if logger.level == DEBUG {
-		logger.logger.Println("project: enter")
-	}
+	logger.Log(DEBUG, "project: %s", "enter")
 
 	vars := mux.Vars(req)
 	id := vars["id"]
 
 	pid, err := strconv.Atoi(id)
 	if err != nil {
-		if logger.level == DEBUG {
-			logger.logger.Printf("getproject: strconv.Atoi(%d) failed [%+v]", id, err)
-		}
+		logger.Log(DEBUG, "getproject: strconv.Atoi(%d) failed [%+v]", id, err)
 
 		w.WriteHeader(http.StatusInternalServerError)
 		w.Write(mkError("ServerError", "reason", fmt.Sprintf("Project ID must be an integer not: [%s]", id)))
 
-		if logger.level == DEBUG {
-			logger.logger.Println("project: exit")
-		}
+		logger.Log(DEBUG, "project: %s", "exit")
 
 		return
 	}
@@ -96,47 +84,32 @@ func getproject(ctx context.Context, w http.ResponseWriter, req *http.Request) {
 		w.WriteHeader(http.StatusNotFound)
 		w.Write(mkError("RequestFailed", "reason", fmt.Sprintf("No project exists with specified ID: [%d]", pid)))
 
-		if logger.level == DEBUG {
-			logger.logger.Println("project: exit")
-		}
-
+		logger.Log(DEBUG, "project: %s", "exit")
 		return
 	case err != nil:
-		if logger.level == DEBUG {
-			logger.logger.Printf("getproject: db.FindProjectByID(ctx, %d) failed [%+v]", pid, err)
-		}
+		logger.Log(DEBUG, "getproject: db.FindProjectByID(ctx, %d) failed [%+v]", pid, err)
 
 		w.WriteHeader(http.StatusInternalServerError)
 		w.Write(mkError("ServerError", "reason", fmt.Sprintf("Project lookup error: [%+v]", err)))
 
-		if logger.level == DEBUG {
-			logger.logger.Println("project: exit")
-		}
-
+		logger.Log(DEBUG, "project: %s", "exit")
 		return
 	default:
 		ud, err := uber.Marshal(links(struct{}{}), project(p))
 		if err != nil {
-			if logger.level == DEBUG {
-				logger.logger.Printf("getproject: uber.Marshal(...uber.Marshaler) failed [%+v]", err)
-			}
+			logger.Log(DEBUG, "getproject: uber.Marshal(...uber.Marshaler) failed [%+v]", err)
 
 			w.WriteHeader(http.StatusInternalServerError)
 			w.Write(mkError("ServerError", "reason", fmt.Sprintf("Unable to marshal response [%+v]", err)))
 
-			if logger.level == DEBUG {
-				logger.logger.Println("project: exit")
-			}
-
+			logger.Log(DEBUG, "project: %s", "exit")
 			return
 		}
 
 		w.Write(ud)
 	}
 
-	if logger.level == DEBUG {
-		logger.logger.Println("project: exit")
-	}
+	logger.Log(DEBUG, "project: %s", "exit")
 }
 
 func (p project) MarshalUBER() (uber.Data, error) {
@@ -167,23 +140,15 @@ func (p project) MarshalUBER() (uber.Data, error) {
 }
 
 func projectlist(ctx context.Context, w http.ResponseWriter, req *http.Request) {
-	logger := ctx.Value("logger").(*leveledLogger)
-	if logger == nil {
-		devnull, _ := os.OpenFile("/dev/null", os.O_WRONLY, os.ModePerm)
-		logger = &leveledLogger{logger: log.New(devnull, "nulllogger", log.LstdFlags), level: INFO}
-	}
+	logger := loggerFromContext(ctx)
 
-	if logger.level == DEBUG {
-		logger.logger.Println("projectlist: enter")
-	}
+	logger.Log(DEBUG, "projectlist: %s", "enter")
 
 	pl, err := db.FindAllProjects(ctx)
 	if err != nil {
 		rc, reason := http.StatusInternalServerError, "no projects in context"
 
-		if logger.level == DEBUG {
-			logger.logger.Printf("projectlist: exit with %d [%s]", http.StatusInternalServerError, reason)
-		}
+		logger.Log(DEBUG, "projectlist: exit with %d [%s]", http.StatusInternalServerError, reason)
 
 		w.WriteHeader(rc)
 		w.Write(mkError("ServerError", "reason", reason))
@@ -193,17 +158,13 @@ func projectlist(ctx context.Context, w http.ResponseWriter, req *http.Request) 
 	if err != nil {
 		rc, reason := http.StatusInternalServerError, fmt.Sprintf("Unable to marshal as UBER: %+v", err)
 
-		if logger.level == DEBUG {
-			logger.logger.Printf("projectlist: exit with %d [%s]", rc, reason)
-		}
+		logger.Log(DEBUG, "projectlist: exit with %d [%s]", rc, reason)
 
 		w.WriteHeader(rc)
 		w.Write(mkError("ServerError", "reason", reason))
 	}
 
-	if logger.level == DEBUG {
-		logger.logger.Printf("projectlist: exit with 200 [%s]", string(ud))
-	}
+	logger.Log(DEBUG, "projectlist: exit with 200 [%s]", string(ud))
 
 	w.Write(ud)
 }

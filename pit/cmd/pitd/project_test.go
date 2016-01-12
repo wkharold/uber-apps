@@ -111,7 +111,7 @@ func multiproject() context.Context {
 	ctx := context.Background()
 	ctx = context.WithValue(ctx, "database", db)
 	ctx = context.WithValue(ctx, "ids-chan", make(chan int))
-	ctx = context.WithValue(ctx, "logger", &leveledLogger{logger: log.New(os.Stdout, "pittest: ", log.LstdFlags), level: INFO})
+	ctx = context.WithValue(ctx, "logger", &leveledLogger{logger: log.New(os.Stdout, "pittest: ", log.LstdFlags), level: DEBUG})
 
 	tx, err := db.Begin()
 	if err != nil {
@@ -140,7 +140,7 @@ func noprojects() context.Context {
 	ctx := context.Background()
 	ctx = context.WithValue(ctx, "database", db)
 	ctx = context.WithValue(ctx, "ids-chan", make(chan int))
-	ctx = context.WithValue(ctx, "logger", &leveledLogger{logger: log.New(os.Stdout, "pittest: ", log.LstdFlags), level: INFO})
+	ctx = context.WithValue(ctx, "logger", &leveledLogger{logger: log.New(os.Stdout, "pittest: ", log.LstdFlags), level: DEBUG})
 	return ctx
 }
 
@@ -150,7 +150,7 @@ func oneproject() context.Context {
 	ctx := context.Background()
 	ctx = context.WithValue(ctx, "database", db)
 	ctx = context.WithValue(ctx, "ids-chan", make(chan int))
-	ctx = context.WithValue(ctx, "logger", &leveledLogger{logger: log.New(os.Stdout, "pittest: ", log.LstdFlags), level: INFO})
+	ctx = context.WithValue(ctx, "logger", &leveledLogger{logger: log.New(os.Stdout, "pittest: ", log.LstdFlags), level: DEBUG})
 
 	tx, err := db.Begin()
 	if err != nil {

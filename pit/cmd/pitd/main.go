@@ -95,3 +95,22 @@ func mkError(name, rel, value string) []byte {
 	}
 	return ubererr
 }
+
+// loggerFromContext retrieves a leveledLogger from the given context; if no leveledLogger is present a null logger
+// which writes to /dev/null is returned
+func loggerFromContext(ctx context.Context) *leveledLogger {
+	logger, ok := ctx.Value("logger").(*leveledLogger)
+	if !ok {
+		devnull, _ := os.OpenFile("/dev/null", os.O_WRONLY, os.ModePerm)
+		logger = &leveledLogger{logger: log.New(devnull, "nulllogger", log.LstdFlags), level: INFO}
+	}
+
+	return logger
+}
+
+// Log generates a log message if the specified level less than or equal to the level in force at the time of the call.
+func (ll leveledLogger) Log(level int, msg string, args ...interface{}) {
+	if ll.level <= level {
+		ll.logger.Printf(msg, args)
+	}
+}
