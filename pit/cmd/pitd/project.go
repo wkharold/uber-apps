@@ -3,7 +3,9 @@ package main
 import (
 	"database/sql"
 	"fmt"
+	"io/ioutil"
 	"net/http"
+	"regexp"
 	"strconv"
 
 	"github.com/gorilla/mux"
@@ -63,8 +65,34 @@ func addproject(ctx context.Context, w http.ResponseWriter, req *http.Request) {
 
 	logger.Log(DEBUG, "addproject: %s", "enter")
 
-	logger.Log(DEBUG, "addproject: %s", "exit")
-	w.WriteHeader(http.StatusNotImplemented)
+	body, err := ioutil.ReadAll(req.Body)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write(mkError("ServerError", "reason", fmt.Sprintf("Cannot read HTTP request body [%+v]", err)))
+		logger.Log(DEBUG, "addproject: %s [%d]", "exit", http.StatusInternalServerError)
+		return
+	}
+
+	re := regexp.MustCompile("n=([([:word:][:space:])]+)&d=([([:word:][:space:])]+)&o=(.+@.+)")
+	sm := re.FindStringSubmatch(string(body))
+	if sm == nil || len(sm) < 4 {
+		w.WriteHeader(http.StatusBadRequest)
+		w.Write(mkError("ClientError", "reason", fmt.Sprintf("Project specification must be of the form: \"n={name}&d={description}&o={owner}\" not [%s]", string(body))))
+		logger.Log(DEBUG, "addproject: %s [%d]", "exit", http.StatusBadRequest)
+		return
+	}
+
+	_, err = db.NewProject(ctx, sm[1], sm[2], sm[3])
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write(mkError("ServerError", "reason", fmt.Sprintf("Unable to create new project [%+v]", err)))
+		logger.Log(DEBUG, "addproject: %s [%d]", "exit", http.StatusInternalServerError)
+		return
+	}
+
+	w.WriteHeader(http.StatusCreated)
+
+	logger.Log(DEBUG, "addproject: %s [%d]", "exit", http.StatusCreated)
 }
 
 func getproject(ctx context.Context, w http.ResponseWriter, req *http.Request) {

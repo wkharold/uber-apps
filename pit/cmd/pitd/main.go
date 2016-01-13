@@ -112,6 +112,6 @@ func loggerFromContext(ctx context.Context) *leveledLogger {
 // Log generates a log message if the specified level less than or equal to the level in force at the time of the call.
 func (ll leveledLogger) Log(level int, msg string, args ...interface{}) {
 	if ll.level <= level {
-		ll.logger.Printf(msg, args)
+		ll.logger.Printf(msg, args...)
 	}
 }

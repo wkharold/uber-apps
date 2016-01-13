@@ -46,6 +46,11 @@ var ptes = []projecttest{
 func TestProjects(t *testing.T) {
 	for _, pt := range ptes {
 		ctx := pt.ctxfn()
+		ids := ctx.Value("ids-chan").(chan int)
+
+		go func() {
+			ids <- 101
+		}()
 
 		req, err := http.NewRequest(pt.method, pt.req, strings.NewReader(pt.payload))
 		if err != nil {
@@ -142,6 +147,18 @@ func noprojects() context.Context {
 	ctx = context.WithValue(ctx, "database", db)
 	ctx = context.WithValue(ctx, "ids-chan", make(chan int))
 	ctx = context.WithValue(ctx, "logger", &leveledLogger{logger: log.New(os.Stdout, "pittest: ", log.LstdFlags), level: DEBUG})
+
+	tx, err := db.Begin()
+	if err != nil {
+		panic(fmt.Sprintf("cannot create a transaction to setup the database: [%+v]", err))
+	}
+
+	if _, err := tx.Exec(`INSERT INTO members VALUES (1001, "owner@test.net"), (1002, "owner@test.io");`); err != nil {
+		panic(fmt.Sprintf("cannot setup members table: [%+v]", err))
+	}
+
+	tx.Commit()
+
 	return ctx
 }
 
