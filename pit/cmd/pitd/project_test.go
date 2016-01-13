@@ -40,6 +40,7 @@ var ptes = []projecttest{
 	{"get unknown project", getproject, "/project/001", GET, "", multiproject, http.StatusNotFound, testdata.UnknownProjectError},
 	{"get the only project", getproject, "/project/101", GET, "", oneproject, 200, testdata.Project101},
 	{"get a project", getproject, "/project/102", GET, "", multiproject, 200, testdata.Project102},
+	{"add the first project", addproject, "/projects", POST, "n=project one&d=first test project&o=owner@test.net", noprojects, 201, ""},
 }
 
 func TestProjects(t *testing.T) {

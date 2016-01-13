@@ -58,6 +58,15 @@ func (ls links) MarshalUBER() (uber.Data, error) {
 	}, nil
 }
 
+func addproject(ctx context.Context, w http.ResponseWriter, req *http.Request) {
+	logger := loggerFromContext(ctx)
+
+	logger.Log(DEBUG, "addproject: %s", "enter")
+
+	logger.Log(DEBUG, "addproject: %s", "exit")
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
 func getproject(ctx context.Context, w http.ResponseWriter, req *http.Request) {
 	logger := loggerFromContext(ctx)
 
@@ -74,7 +83,6 @@ func getproject(ctx context.Context, w http.ResponseWriter, req *http.Request) {
 		w.Write(mkError("ServerError", "reason", fmt.Sprintf("Project ID must be an integer not: [%s]", id)))
 
 		logger.Log(DEBUG, "project: %s", "exit")
-
 		return
 	}
 
