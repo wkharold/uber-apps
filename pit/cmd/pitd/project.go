@@ -67,26 +67,38 @@ func addproject(ctx context.Context, w http.ResponseWriter, req *http.Request) {
 
 	body, err := ioutil.ReadAll(req.Body)
 	if err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
-		w.Write(mkError("ServerError", "reason", fmt.Sprintf("Cannot read HTTP request body [%+v]", err)))
-		logger.Log(DEBUG, "addproject: %s [%d]", "exit", http.StatusInternalServerError)
+		reason := fmt.Sprintf("Cannot read HTTP request body [%+v]", err)
+		status := http.StatusInternalServerError
+
+		w.Write(mkError("ServerError", "reason", reason))
+		w.WriteHeader(status)
+
+		logger.Log(DEBUG, "addproject: exit with %d [%s]", status, reason)
 		return
 	}
 
 	re := regexp.MustCompile("n=([([:word:][:space:])]+)&d=([([:word:][:space:])]+)&o=(.+@.+)")
 	sm := re.FindStringSubmatch(string(body))
 	if sm == nil || len(sm) < 4 {
-		w.WriteHeader(http.StatusBadRequest)
-		w.Write(mkError("ClientError", "reason", fmt.Sprintf("Project specification must be of the form: \"n={name}&d={description}&o={owner}\" not [%s]", string(body))))
-		logger.Log(DEBUG, "addproject: %s [%d]", "exit", http.StatusBadRequest)
+		reason := fmt.Sprintf("Project specification must be of the form: \"n={name}&d={description}&o={owner}\" not [%s]", string(body))
+		status := http.StatusBadRequest
+
+		w.Write(mkError("ClientError", "reason", reason))
+		w.WriteHeader(status)
+
+		logger.Log(DEBUG, "addproject: exit with %d [%s]", status, reason)
 		return
 	}
 
 	_, err = db.NewProject(ctx, sm[1], sm[2], sm[3])
 	if err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
-		w.Write(mkError("ServerError", "reason", fmt.Sprintf("Unable to create new project [%+v]", err)))
-		logger.Log(DEBUG, "addproject: %s [%d]", "exit", http.StatusInternalServerError)
+		reason := fmt.Sprintf("Unable to create new project [%+v]", err)
+		status := http.StatusInternalServerError
+
+		w.Write(mkError("ServerError", "reason", reason))
+		w.WriteHeader(status)
+
+		logger.Log(DEBUG, "addproject: exit with %d [%s]", status, reason)
 		return
 	}
 
@@ -98,7 +110,7 @@ func addproject(ctx context.Context, w http.ResponseWriter, req *http.Request) {
 func getproject(ctx context.Context, w http.ResponseWriter, req *http.Request) {
 	logger := loggerFromContext(ctx)
 
-	logger.Log(DEBUG, "project: %s", "enter")
+	logger.Log(DEBUG, "getproject: %s", "enter")
 
 	vars := mux.Vars(req)
 	id := vars["id"]
@@ -110,7 +122,7 @@ func getproject(ctx context.Context, w http.ResponseWriter, req *http.Request) {
 		w.WriteHeader(http.StatusInternalServerError)
 		w.Write(mkError("ServerError", "reason", fmt.Sprintf("Project ID must be an integer not: [%s]", id)))
 
-		logger.Log(DEBUG, "project: %s", "exit")
+		logger.Log(DEBUG, "getproject: %s [%d]", "exit", http.StatusInternalServerError)
 		return
 	}
 
@@ -120,7 +132,7 @@ func getproject(ctx context.Context, w http.ResponseWriter, req *http.Request) {
 		w.WriteHeader(http.StatusNotFound)
 		w.Write(mkError("RequestFailed", "reason", fmt.Sprintf("No project exists with specified ID: [%d]", pid)))
 
-		logger.Log(DEBUG, "project: %s", "exit")
+		logger.Log(DEBUG, "getproject: %s [%d]", "exit", http.StatusNotFound)
 		return
 	case err != nil:
 		logger.Log(DEBUG, "getproject: db.FindProjectByID(ctx, %d) failed [%+v]", pid, err)
@@ -128,7 +140,7 @@ func getproject(ctx context.Context, w http.ResponseWriter, req *http.Request) {
 		w.WriteHeader(http.StatusInternalServerError)
 		w.Write(mkError("ServerError", "reason", fmt.Sprintf("Project lookup error: [%+v]", err)))
 
-		logger.Log(DEBUG, "project: %s", "exit")
+		logger.Log(DEBUG, "getproject: %s [%d]", "exit", http.StatusInternalServerError)
 		return
 	default:
 		ud, err := uber.Marshal(links(struct{}{}), project(p))
@@ -138,14 +150,14 @@ func getproject(ctx context.Context, w http.ResponseWriter, req *http.Request) {
 			w.WriteHeader(http.StatusInternalServerError)
 			w.Write(mkError("ServerError", "reason", fmt.Sprintf("Unable to marshal response [%+v]", err)))
 
-			logger.Log(DEBUG, "project: %s", "exit")
+			logger.Log(DEBUG, "getproject: %s [%d]", "exit", http.StatusInternalServerError)
 			return
 		}
 
 		w.Write(ud)
 	}
 
-	logger.Log(DEBUG, "project: %s", "exit")
+	logger.Log(DEBUG, "getproject: %s [%d]", "exit", http.StatusOK)
 }
 
 func (p project) MarshalUBER() (uber.Data, error) {
