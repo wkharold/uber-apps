@@ -67,38 +67,35 @@ func addproject(ctx context.Context, w http.ResponseWriter, req *http.Request) {
 
 	body, err := ioutil.ReadAll(req.Body)
 	if err != nil {
-		reason := fmt.Sprintf("Cannot read HTTP request body [%+v]", err)
-		status := http.StatusInternalServerError
+		rc, reason := http.StatusInternalServerError, fmt.Sprintf("Cannot read HTTP request body [%+v]", err)
 
+		w.WriteHeader(rc)
 		w.Write(mkError("ServerError", "reason", reason))
-		w.WriteHeader(status)
 
-		logger.Log(DEBUG, "addproject: exit with %d [%s]", status, reason)
+		logger.Log(DEBUG, "addproject: exit with %d [%s]", rc, reason)
 		return
 	}
 
 	re := regexp.MustCompile("n=([([:word:][:space:])]+)&d=([([:word:][:space:])]+)&o=(.+@.+)")
 	sm := re.FindStringSubmatch(string(body))
 	if sm == nil || len(sm) < 4 {
-		reason := fmt.Sprintf("Project specification must be of the form: \"n={name}&d={description}&o={owner}\" not [%s]", string(body))
-		status := http.StatusBadRequest
+		rc, reason := http.StatusBadRequest, fmt.Sprintf("Project specification must be of the form: \"n={name}&d={description}&o={owner}\" not [%s]", string(body))
 
+		w.WriteHeader(rc)
 		w.Write(mkError("ClientError", "reason", reason))
-		w.WriteHeader(status)
 
-		logger.Log(DEBUG, "addproject: exit with %d [%s]", status, reason)
+		logger.Log(DEBUG, "addproject: exit with %d [%s]", rc, reason)
 		return
 	}
 
 	_, err = db.NewProject(ctx, sm[1], sm[2], sm[3])
 	if err != nil {
-		reason := fmt.Sprintf("Unable to create new project [%+v]", err)
-		status := http.StatusInternalServerError
+		rc, reason := http.StatusInternalServerError, fmt.Sprintf("Unable to create new project [%+v]", err)
 
+		w.WriteHeader(rc)
 		w.Write(mkError("ServerError", "reason", reason))
-		w.WriteHeader(status)
 
-		logger.Log(DEBUG, "addproject: exit with %d [%s]", status, reason)
+		logger.Log(DEBUG, "addproject: exit with %d [%s]", rc, reason)
 		return
 	}
 
@@ -119,50 +116,46 @@ func getproject(ctx context.Context, w http.ResponseWriter, req *http.Request) {
 	if err != nil {
 		logger.Log(DEBUG, "getproject: strconv.Atoi(%d) failed [%+v]", id, err)
 
-		status, reason := http.StatusInternalServerError, fmt.Sprintf("Project ID must be an integer not: [%s]", id)
+		rc, reason := http.StatusInternalServerError, fmt.Sprintf("Project ID must be an integer not: [%s]", id)
 
+		w.WriteHeader(rc)
 		w.Write(mkError("ServerError", "reason", reason))
-		w.WriteHeader(status)
 
-		logger.Log(DEBUG, "getproject: exit with %d [%s]", status, reason)
+		logger.Log(DEBUG, "getproject: exit with %d [%s]", rc, reason)
 		return
 	}
 
 	p, err := db.FindProjectByID(ctx, pid)
 	switch {
 	case err == sql.ErrNoRows:
-		status, reason := http.StatusNotFound, fmt.Sprintf("No project exists with specified ID: [%d]", pid)
+		rc, reason := http.StatusNotFound, fmt.Sprintf("No project exists with specified ID: [%d]", pid)
 
+		w.WriteHeader(rc)
 		w.Write(mkError("RequestFailed", "reason", reason))
-		w.WriteHeader(404)
 
-		fmt.Println(w)
-
-		logger.Log(DEBUG, "getproject: exit with %d [%s]", status, reason)
+		logger.Log(DEBUG, "getproject: exit with %d [%s]", rc, reason)
 		return
 	case err != nil:
 		logger.Log(DEBUG, "getproject: db.FindProjectByID(ctx, %d) failed [%+v]", pid, err)
 
-		reason := fmt.Sprintf("Project lookup error: [%+v]", err)
-		status := http.StatusInternalServerError
+		rc, reason := http.StatusInternalServerError, fmt.Sprintf("Project lookup error: [%+v]", err)
 
+		w.WriteHeader(rc)
 		w.Write(mkError("ServerError", "reason", reason))
-		w.WriteHeader(status)
 
-		logger.Log(DEBUG, "getproject: exit with %d [%s]", status, reason)
+		logger.Log(DEBUG, "getproject: exit with %d [%s]", rc, reason)
 		return
 	default:
 		ud, err := uber.Marshal(links(struct{}{}), project(p))
 		if err != nil {
 			logger.Log(DEBUG, "getproject: uber.Marshal(...uber.Marshaler) failed [%+v]", err)
 
-			reason := fmt.Sprintf("Unable to marshal response [%+v]", err)
-			status := http.StatusInternalServerError
+			rc, reason := http.StatusInternalServerError, fmt.Sprintf("Unable to marshal response [%+v]", err)
 
+			w.WriteHeader(rc)
 			w.Write(mkError("ServerError", "reason", reason))
-			w.WriteHeader(status)
 
-			logger.Log(DEBUG, "getproject: exit with %d [%s]", status, reason)
+			logger.Log(DEBUG, "getproject: exit with %d [%s]", rc, reason)
 			return
 		}
 
@@ -206,23 +199,23 @@ func projectlist(ctx context.Context, w http.ResponseWriter, req *http.Request) 
 
 	pl, err := db.FindAllProjects(ctx)
 	if err != nil {
-		status, reason := http.StatusInternalServerError, "no projects in context"
+		rc, reason := http.StatusInternalServerError, "no projects in context"
 
 		w.Write(mkError("ServerError", "reason", reason))
-		w.WriteHeader(status)
+		w.WriteHeader(rc)
 
-		logger.Log(DEBUG, "projectlist: exit with %d [%s]", status, reason)
+		logger.Log(DEBUG, "projectlist: exit with %d [%s]", rc, reason)
 		return
 	}
 
 	ud, err := uber.Marshal(links(struct{}{}), projects(pl))
 	if err != nil {
-		status, reason := http.StatusInternalServerError, fmt.Sprintf("Unable to marshal as UBER: %+v", err)
+		rc, reason := http.StatusInternalServerError, fmt.Sprintf("Unable to marshal as UBER: %+v", err)
 
 		w.Write(mkError("ServerError", "reason", reason))
-		w.WriteHeader(status)
+		w.WriteHeader(rc)
 
-		logger.Log(DEBUG, "projectlist: exit with %d [%s]", status, reason)
+		logger.Log(DEBUG, "projectlist: exit with %d [%s]", rc, reason)
 		return
 	}
 
