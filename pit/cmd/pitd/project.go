@@ -43,7 +43,7 @@ func (ls links) MarshalUBER() (uber.Data, error) {
 				ID:        "search",
 				Name:      "links",
 				Rel:       []string{"search"},
-				URL:       "/projects/search{?name}",
+				URL:       "/projects/search{?n}",
 				Templated: true,
 				Data:      []uber.Data{},
 			},
@@ -181,7 +181,7 @@ func (p project) MarshalUBER() (uber.Data, error) {
 			},
 			{
 				Rel:       []string{"search"},
-				URL:       fmt.Sprintf("/project/%d/search{?name}", dbp.ID()),
+				URL:       fmt.Sprintf("/project/%d/search{?n}", dbp.ID()),
 				Templated: true,
 			},
 			{Name: "description", Value: dbp.Description()},
@@ -242,7 +242,7 @@ func (ps projects) MarshalUBER() (uber.Data, error) {
 				},
 				{
 					Rel:       []string{"search"},
-					URL:       fmt.Sprintf("/project/%d/search{?name}", p.ID()),
+					URL:       fmt.Sprintf("/project/%d/search{?n}", p.ID()),
 					Templated: true,
 				},
 			},

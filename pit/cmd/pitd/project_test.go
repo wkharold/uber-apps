@@ -41,6 +41,9 @@ var ptes = []projecttest{
 	{"get the only project", getproject, "/project/101", GET, "", oneproject, 200, testdata.Project101},
 	{"get a project", getproject, "/project/102", GET, "", multiproject, 200, testdata.Project102},
 	{"add the first project", addproject, "/projects", POST, "n=project one&d=first test project&o=owner@test.net", noprojects, 201, ""},
+	{"add with incorrect tags", addproject, "/projects", POST, "nm=project&desc=stuff&owner=owner@test.io", noprojects, http.StatusBadRequest, ""},
+	{"add with missing tag", addproject, "/projects", POST, "n=project one&o=owner@test.net", noprojects, http.StatusBadRequest, ""},
+	{"add with tags out of order", addproject, "/projects", POST, "d=first test project&n=project one&o=owner@test.io", noprojects, http.StatusBadRequest, ""},
 }
 
 func TestProjects(t *testing.T) {
