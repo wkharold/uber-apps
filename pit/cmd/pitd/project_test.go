@@ -44,10 +44,10 @@ var ptes = []projecttest{
 	{"add with incorrect tags", addproject, "/projects", POST, "nm=project&desc=stuff&owner=owner@test.io", noprojects, http.StatusBadRequest, ""},
 	{"add with missing tag", addproject, "/projects", POST, "n=project one&o=owner@test.net", noprojects, http.StatusBadRequest, ""},
 	{"add with tags out of order", addproject, "/projects", POST, "d=first test project&n=project one&o=owner@test.io", noprojects, http.StatusBadRequest, ""},
-	{"search for unknown project", findproject, "/projects/search?n=unknown project", GET, "", multiproject, http.StatusNotFound, ""},
-	{"bad search request", findproject, "/projects/search?name=project one", GET, "", oneproject, http.StatusBadRequest, ""},
-	{"find the only project", findproject, "/projects/search?n=project one", GET, "", oneproject, http.StatusOK, testdata.Project101},
-	{"find a project among many", findproject, "/projects/search?=project two", GET, "", multiproject, http.StatusOK, testdata.Project102},
+	{"search for unknown project", findproject, "/projects/search?name=unknown project", GET, "", multiproject, http.StatusNotFound, ""},
+	{"bad search request", findproject, "/projects/search?n=project one", GET, "", oneproject, http.StatusBadRequest, ""},
+	{"find the only project", findproject, "/projects/search?name=project one", GET, "", oneproject, http.StatusOK, testdata.Project101},
+	{"find a project among many", findproject, "/projects/search?name=project two", GET, "", multiproject, http.StatusOK, testdata.Project102},
 }
 
 func TestProjects(t *testing.T) {

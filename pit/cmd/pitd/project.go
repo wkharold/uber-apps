@@ -43,7 +43,7 @@ func (ls links) MarshalUBER() (uber.Data, error) {
 				ID:        "search",
 				Name:      "links",
 				Rel:       []string{"search"},
-				URL:       "/projects/search{?n}",
+				URL:       "/projects/search{?name}",
 				Templated: true,
 				Data:      []uber.Data{},
 			},
@@ -109,12 +109,55 @@ func findproject(ctx context.Context, w http.ResponseWriter, req *http.Request) 
 
 	logger.Log(DEBUG, "findproject: %s", "enter")
 
-	rc := http.StatusNotImplemented
+	pnm, ok := req.URL.Query()["name"]
+	if !ok {
+		rc, reason := http.StatusBadRequest, fmt.Sprintf("Request must include a \"name\" query parameter")
 
-	w.WriteHeader(rc)
+		w.WriteHeader(rc)
+		w.Write(mkError("ClientError", "reason", reason))
 
-	logger.Log(DEBUG, "findproject: exiting with %d", rc)
+		logger.Log(DEBUG, "findproject: exit with %d [%s]", rc, reason)
+		return
+	}
+
+	p, err := db.FindProjectByName(ctx, pnm[0])
+	switch {
+	case err == sql.ErrNoRows:
+		rc, reason := http.StatusNotFound, fmt.Sprintf("Cannot find a project named: %s", pnm[0])
+
+		w.WriteHeader(rc)
+		w.Write(mkError("NoSuchProject", "reason", reason))
+
+		logger.Log(DEBUG, "findproject: exit with %d [%s]", rc, reason)
+		return
+	case err != nil:
+		rc, reason := http.StatusInternalServerError, fmt.Sprintf("Unable to lookup project %s: [%v]", pnm[0], err)
+
+		w.WriteHeader(rc)
+		w.Write(mkError("ServerError", "reason", reason))
+
+		logger.Log(DEBUG, "findproject: exit with %d [%s]", rc, reason)
+		return
+	default:
+		ud, err := uber.Marshal(links(struct{}{}), project(p))
+		if err != nil {
+			logger.Log(INFO, "findproject: uber.Marshal(...uber.Marshaler) failed [%+v", err)
+
+			rc, reason := http.StatusInternalServerError, fmt.Sprintf("Unable to marshal response [%+v]", err)
+
+			w.WriteHeader(rc)
+			w.Write(mkError("ServerError", "reason", reason))
+
+			logger.Log(DEBUG, "findproject: exit with %d [%s]", rc, reason)
+			return
+		}
+
+		w.Write(ud)
+	}
+
+	logger.Log(DEBUG, "findproject: exiting with %d", http.StatusOK)
 }
+
 func getproject(ctx context.Context, w http.ResponseWriter, req *http.Request) {
 	logger := loggerFromContext(ctx)
 
@@ -192,7 +235,7 @@ func (p project) MarshalUBER() (uber.Data, error) {
 			},
 			{
 				Rel:       []string{"search"},
-				URL:       fmt.Sprintf("/project/%d/search{?n}", dbp.ID()),
+				URL:       fmt.Sprintf("/project/%d/search{?name}", dbp.ID()),
 				Templated: true,
 			},
 			{Name: "description", Value: dbp.Description()},
@@ -253,7 +296,7 @@ func (ps projects) MarshalUBER() (uber.Data, error) {
 				},
 				{
 					Rel:       []string{"search"},
-					URL:       fmt.Sprintf("/project/%d/search{?n}", p.ID()),
+					URL:       fmt.Sprintf("/project/%d/search{?name}", p.ID()),
 					Templated: true,
 				},
 			},

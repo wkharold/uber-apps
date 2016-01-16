@@ -29,7 +29,7 @@ var (
 							"id": "search", 
 							"name": "links",
 							"rel": [ "search" ], 
-							"url": "/projects/search{?n}", 
+							"url": "/projects/search{?name}", 
 							"templated": true
 						},
 						{ 
@@ -76,7 +76,7 @@ var (
 							"id": "search",
 							"name": "links",
 							"rel": [ "search" ],
-							"url": "/projects/search{?n}",
+							"url": "/projects/search{?name}",
 							"templated": true
 						},
 						{
@@ -101,7 +101,7 @@ var (
 							"data":
 							[
 								{ "rel": [ "add" ], "url": "/project/101/issues", "action": "append", "model": "n={name}\u0026d={description}\u0026p={priority}\u0026r={reporter}" },
-								{ "rel": [ "search" ], "url": "/project/101/search{?n}", "templated": true}
+								{ "rel": [ "search" ], "url": "/project/101/search{?name}", "templated": true}
 							]
 						},
 						{
@@ -112,7 +112,7 @@ var (
 							"data":
 							[
 								{ "rel": [ "add" ], "url": "/project/102/issues", "action": "append", "model": "n={name}\u0026d={description}\u0026p={priority}\u0026r={reporter}" },
-								{ "rel": [ "search" ], "url": "/project/102/search{?n}", "templated": true}
+								{ "rel": [ "search" ], "url": "/project/102/search{?name}", "templated": true}
 							]
 						},
 						{
@@ -123,7 +123,7 @@ var (
 							"data":
 							[
 								{ "rel": [ "add" ], "url": "/project/103/issues", "action": "append", "model": "n={name}\u0026d={description}\u0026p={priority}\u0026r={reporter}" },
-								{ "rel": [ "search" ], "url": "/project/103/search{?n}", "templated": true}
+								{ "rel": [ "search" ], "url": "/project/103/search{?name}", "templated": true}
 							]
 						}
 					]
@@ -159,7 +159,7 @@ var (
 							"id": "search",
 							"name": "links",
 							"rel": [ "search" ],
-							"url": "/projects/search{?n}",
+							"url": "/projects/search{?name}",
 							"templated": true
 						},
 						{
@@ -184,7 +184,7 @@ var (
 							"data":
 							[
 								{ "rel": [ "add" ], "url": "/project/101/issues", "action": "append", "model": "n={name}\u0026d={description}\u0026p={priority}\u0026r={reporter}" },
-								{ "rel": [ "search" ], "url": "/project/101/search{?n}", "templated": true}
+								{ "rel": [ "search" ], "url": "/project/101/search{?name}", "templated": true}
 							]
 						}
 					]
@@ -220,7 +220,7 @@ var (
 							"id": "search",
 							"name": "links",
 							"rel": [ "search" ],
-							"url": "/projects/search{?n}",
+							"url": "/projects/search{?name}",
 							"templated": true
 						},
 						{
@@ -245,7 +245,7 @@ var (
 							"data":
 							[
 								{"rel": [ "add" ], "url": "/project/101/issues", "action": "append", "model": "n={name}\u0026d={description}\u0026p={priority}\u0026r={reporter}"},
-								{"rel": [ "search" ], "url": "/project/101/search{?n}", "templated": true},
+								{"rel": [ "search" ], "url": "/project/101/search{?name}", "templated": true},
 								{"name": "description", "value": "first test project"},
 								{"name": "owner", "value": "owner@test.net"}
 							]
@@ -283,7 +283,7 @@ var (
 							"id": "search",
 							"name": "links",
 							"rel": [ "search" ],
-							"url": "/projects/search{?n}",
+							"url": "/projects/search{?name}",
 							"templated": true
 						},
 						{
@@ -308,7 +308,7 @@ var (
 							"data":
 							[
 								{"rel": [ "add" ], "url": "/project/102/issues", "action": "append", "model": "n={name}\u0026d={description}\u0026p={priority}\u0026r={reporter}"},
-								{"rel": [ "search" ], "url": "/project/102/search{?n}", "templated": true},
+								{"rel": [ "search" ], "url": "/project/102/search{?name}", "templated": true},
 								{"name": "description", "value": "second test project"},
 								{"name": "owner", "value": "owner@test.net"}
 							]
