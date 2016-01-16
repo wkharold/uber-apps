@@ -47,6 +47,7 @@ func router(ctx context.Context) *mux.Router {
 	r.Handle("/_loglevel", http.Handler(httpctx.ContextAdapter{Ctx: ctx, Handler: httpctx.ContextHandlerFunc(loglevel)})).Methods("POST")
 	r.Handle("/projects", http.Handler(httpctx.ContextAdapter{Ctx: ctx, Handler: httpctx.ContextHandlerFunc(projectlist)})).Methods("GET")
 	r.Handle("/projects", http.Handler(httpctx.ContextAdapter{Ctx: ctx, Handler: httpctx.ContextHandlerFunc(addproject)})).Methods("POST")
+	r.Handle("/projects/search", http.Handler(httpctx.ContextAdapter{Ctx: ctx, Handler: httpctx.ContextHandlerFunc(findproject)})).Methods("GET")
 	r.Handle("/project/{id}", http.Handler(httpctx.ContextAdapter{Ctx: ctx, Handler: httpctx.ContextHandlerFunc(getproject)})).Methods("GET")
 	return r
 }

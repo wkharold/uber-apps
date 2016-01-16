@@ -104,6 +104,17 @@ func addproject(ctx context.Context, w http.ResponseWriter, req *http.Request) {
 	logger.Log(DEBUG, "addproject: exit with %d", http.StatusCreated)
 }
 
+func findproject(ctx context.Context, w http.ResponseWriter, req *http.Request) {
+	logger := loggerFromContext(ctx)
+
+	logger.Log(DEBUG, "findproject: %s", "enter")
+
+	rc := http.StatusNotImplemented
+
+	w.WriteHeader(rc)
+
+	logger.Log(DEBUG, "findproject: exiting with %d", rc)
+}
 func getproject(ctx context.Context, w http.ResponseWriter, req *http.Request) {
 	logger := loggerFromContext(ctx)
 
