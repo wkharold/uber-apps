@@ -52,6 +52,12 @@ func router(ctx context.Context) *mux.Router {
 	return r
 }
 
+func writeError(action string, w http.ResponseWriter, logger *leveledLogger, errtype string, rc int, reason string) {
+	w.WriteHeader(rc)
+	w.Write(mkError(errtype, "reason", reason))
+	logger.Log(DEBUG, "%s: exit with %d [%s]", action, rc, reason)
+}
+
 // loglevel sets the desired level of logging
 func loglevel(ctx context.Context, w http.ResponseWriter, req *http.Request) {
 	body, err := ioutil.ReadAll(req.Body)
