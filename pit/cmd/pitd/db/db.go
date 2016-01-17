@@ -30,7 +30,7 @@ var (
 
 var (
 	qldb *sql.DB
-	IDs  chan int
+	ids  chan int
 )
 
 func init() {
@@ -49,7 +49,8 @@ func init() {
 		panic(fmt.Sprintf("table creation failed: [%+v]", err))
 	}
 
-	go nextID(IDs)
+	ids = make(chan int)
+	go nextID(ids)
 }
 
 func databaseFromContext(ctx context.Context) *sql.DB {
@@ -65,7 +66,7 @@ func idsChanFromContext(ctx context.Context) chan int {
 	if ok {
 		return result
 	}
-	return IDs
+	return ids
 }
 
 func mkTables(db *sql.DB) error {
