@@ -48,6 +48,14 @@ var ptes = []projecttest{
 	{"bad search request", findproject, "/projects/search?n=project one", GET, "", oneproject, http.StatusBadRequest, ""},
 	{"find the only project", findproject, "/projects/search?name=project one", GET, "", oneproject, http.StatusOK, testdata.Project101},
 	{"find a project among many", findproject, "/projects/search?name=project two", GET, "", multiproject, http.StatusOK, testdata.Project102},
+	{"empty team list", teamlist, "/team", GET, "", nomembers, http.StatusOK, testdata.EmptyTeamList},
+	{"single team member list", teamlist, "/team", GET, "", onemember, http.StatusOK, testdata.OneTeamMemberList},
+	{"multiple team members list", teamlist, "/team", GET, "", multiplemembers, http.StatusOK, testdata.MultipleTeamMemberList},
+	{"add first member", addmember, "/team", POST, "m=owner@test.net", nomembers, http.StatusCreated, ""},
+	{"add another member", addmember, "/team", POST, "m=bob@members.org", onemember, http.StatusCreated, ""},
+	{"add with incorrect tags", addmember, "/team", POST, "email=carol@members.org", nomembers, http.StatusBadRequest, ""},
+	{"add with missing tag", addmember, "/team", POST, "", nomembers, http.StatusBadRequest, ""},
+	{"add duplicate member", addmember, "/team", POST, "m=owner@test.net", onemember, http.StatusConflict, ""},
 }
 
 func TestProjects(t *testing.T) {
