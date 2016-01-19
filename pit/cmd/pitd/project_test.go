@@ -155,6 +155,61 @@ func multiproject() context.Context {
 	return ctx
 }
 
+func nomembers() context.Context {
+	db := createdb("nomember")
+
+	ctx := context.Background()
+	ctx = context.WithValue(ctx, "database", db)
+	ctx = context.WithValue(ctx, "ids-chan", make(chan int))
+	ctx = context.WithValue(ctx, "logger", &leveledLogger{logger: log.New(os.Stdout, "pittest: ", log.LstdFlags), level: DEBUG})
+
+	return ctx
+}
+
+func onemember() context.Context {
+	db := createdb("onemember")
+
+	ctx := context.Background()
+	ctx = context.WithValue(ctx, "database", db)
+	ctx = context.WithValue(ctx, "ids-chan", make(chan int))
+	ctx = context.WithValue(ctx, "logger", &leveledLogger{logger: log.New(os.Stdout, "pittest: ", log.LstdFlags), level: DEBUG})
+
+	tx, err := db.Begin()
+	if err != nil {
+		panic(fmt.Sprintf("cannot create a transaction to setup the database: [%+v]", err))
+	}
+
+	if _, err := tx.Exec(`INSERT INTO members VALUES (1001, "owner@test.net");`); err != nil {
+		panic(fmt.Sprintf("cannot setup members table: [%+v]", err))
+	}
+
+	tx.Commit()
+
+	return ctx
+}
+
+func multiplemembers() context.Context {
+	db := createdb("multiplemembers")
+
+	ctx := context.Background()
+	ctx = context.WithValue(ctx, "database", db)
+	ctx = context.WithValue(ctx, "ids-chan", make(chan int))
+	ctx = context.WithValue(ctx, "logger", &leveledLogger{logger: log.New(os.Stdout, "pittest: ", log.LstdFlags), level: DEBUG})
+
+	tx, err := db.Begin()
+	if err != nil {
+		panic(fmt.Sprintf("cannot create a transaction to setup the database: [%+v]", err))
+	}
+
+	if _, err := tx.Exec(`INSERT INTO members VALUES (1001, "owner@test.net"), (1002, "owner@test.io");`); err != nil {
+		panic(fmt.Sprintf("cannot setup members table: [%+v]", err))
+	}
+
+	tx.Commit()
+
+	return ctx
+}
+
 func noprojects() context.Context {
 	db := createdb("noprojects")
 

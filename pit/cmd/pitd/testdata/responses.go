@@ -1,6 +1,234 @@
 package testdata
 
 var (
+	EmptyTeamList = `
+	{ 
+		"uber": 
+		{ 
+			"version": "1.0", 
+			"data": 
+			[
+				{ 
+					"id": "links", 
+					"data": 
+					[ 
+						{
+							"id": "alps",
+							"rel": [ "profile" ],
+							"url": "/pit-alps.xml",
+							"action": "read"
+						},
+						{ 
+							"id": "project-list", 
+							"name": "links",
+							"rel": [ "collection" ], 
+							"url": "/projects/", 
+							"action": "read" 
+						},
+						{ 
+							"id": "project-search", 
+							"name": "links",
+							"rel": [ "search" ], 
+							"url": "/projects/search{?name}", 
+							"templated": true,
+							"action": "read"
+						},
+						{ 
+							"id": "project-create", 
+							"name": "links",
+							"rel": [ "add" ], 
+							"url": "/projects/", 
+							"action": "append",
+							"model": "n={name}\u0026d={description}\u0026o={owner}"
+						},
+						{
+							"id": "team-members-list",
+							"name": "links",
+							"rel": [ "collection" ],
+							"url": "/team",
+							"action": "read"
+						},
+						{
+							"id": "team-member-create",
+							"name": "links",
+							"rel": [ "add" ],
+							"url": "/team",
+							"action": "append",
+							"model": "m={email}"
+						}
+					] 
+				},
+				{
+					"id": "members"
+				}
+			] 
+		}
+	}`
+	MultipleTeamMemberList = `
+	{ 
+		"uber": 
+		{ 
+			"version": "1.0", 
+			"data": 
+			[
+				{ 
+					"id": "links", 
+					"data": 
+					[ 
+						{
+							"id": "alps",
+							"rel": [ "profile" ],
+							"url": "/pit-alps.xml",
+							"action": "read"
+						},
+						{ 
+							"id": "project-list", 
+							"name": "links",
+							"rel": [ "collection" ], 
+							"url": "/projects/", 
+							"action": "read" 
+						},
+						{ 
+							"id": "project-search", 
+							"name": "links",
+							"rel": [ "search" ], 
+							"url": "/projects/search{?name}", 
+							"templated": true,
+							"action": "read"
+						},
+						{ 
+							"id": "project-create", 
+							"name": "links",
+							"rel": [ "add" ], 
+							"url": "/projects/", 
+							"action": "append",
+							"model": "n={name}\u0026d={description}\u0026o={owner}"
+						},
+						{
+							"id": "team-members-list",
+							"name": "links",
+							"rel": [ "collection" ],
+							"url": "/team",
+							"action": "read"
+						},
+						{
+							"id": "team-member-create",
+							"name": "links",
+							"rel": [ "add" ],
+							"url": "/team",
+							"action": "append",
+							"model": "m={email}"
+						}
+					] 
+				},
+				{
+					"id": "members",
+					"data":
+					[
+						{
+							"id": "1001",
+							"rel": [ "self" ],
+							"url": "/team/1001",
+							"data":
+							[
+								{"name": "email", "value": "owner@test.net"}
+							]
+						}
+					]
+				},
+				{
+					"id": "members",
+					"data":
+					[
+						{
+							"id": "1002",
+							"rel": [ "self" ],
+							"url": "/team/1002",
+							"data":
+							[
+								{"name": "email", "value": "owner@test.io"}
+							]
+						}
+					]
+				}
+			] 
+		}
+	}`
+	OneTeamMemberList = `
+	{ 
+		"uber": 
+		{ 
+			"version": "1.0", 
+			"data": 
+			[
+				{ 
+					"id": "links", 
+					"data": 
+					[ 
+						{
+							"id": "alps",
+							"rel": [ "profile" ],
+							"url": "/pit-alps.xml",
+							"action": "read"
+						},
+						{ 
+							"id": "project-list", 
+							"name": "links",
+							"rel": [ "collection" ], 
+							"url": "/projects/", 
+							"action": "read" 
+						},
+						{ 
+							"id": "project-search", 
+							"name": "links",
+							"rel": [ "search" ], 
+							"url": "/projects/search{?name}", 
+							"templated": true,
+							"action": "read"
+						},
+						{ 
+							"id": "project-create", 
+							"name": "links",
+							"rel": [ "add" ], 
+							"url": "/projects/", 
+							"action": "append",
+							"model": "n={name}\u0026d={description}\u0026o={owner}"
+						},
+						{
+							"id": "team-members-list",
+							"name": "links",
+							"rel": [ "collection" ],
+							"url": "/team",
+							"action": "read"
+						},
+						{
+							"id": "team-member-create",
+							"name": "links",
+							"rel": [ "add" ],
+							"url": "/team",
+							"action": "append",
+							"model": "m={email}"
+						}
+					] 
+				},
+				{
+					"id": "members",
+					"data":
+					[
+						{
+							"id": "1001",
+							"rel": [ "self" ],
+							"url": "/team/1001",
+							"data":
+							[
+								{"name": "email", "value": "owner@test.net"}
+							]
+						}
+					]
+				}
+			] 
+		}
+	}`
 	EmptyProjectList = `
 	{ 
 		"uber": 
@@ -19,27 +247,43 @@ var (
 							"action": "read"
 						},
 						{ 
-							"id": "list", 
+							"id": "project-list", 
 							"name": "links",
 							"rel": [ "collection" ], 
 							"url": "/projects/", 
 							"action": "read" 
 						},
 						{ 
-							"id": "search", 
+							"id": "project-search", 
 							"name": "links",
 							"rel": [ "search" ], 
 							"url": "/projects/search{?name}", 
-							"templated": true
+							"templated": true,
+							"action": "read"
 						},
 						{ 
-							"id": "new", 
+							"id": "project-create", 
 							"name": "links",
 							"rel": [ "add" ], 
 							"url": "/projects/", 
 							"action": "append",
 							"model": "n={name}\u0026d={description}\u0026o={owner}"
-						} 
+						},
+						{
+							"id": "team-members-list",
+							"name": "links",
+							"rel": [ "collection" ],
+							"url": "/team",
+							"action": "read"
+						},
+						{
+							"id": "team-member-create",
+							"name": "links",
+							"rel": [ "add" ],
+							"url": "/team",
+							"action": "append",
+							"model": "m={email}"
+						}
 					] 
 				},
 				{
@@ -66,26 +310,42 @@ var (
 							"action": "read"
 						},
 						{
-							"id": "list",
+							"id": "project-list",
 							"name": "links",
 							"rel": [ "collection" ],
 							"url": "/projects/",
 							"action": "read"
 						},
 						{
-							"id": "search",
+							"id": "project-search",
 							"name": "links",
 							"rel": [ "search" ],
 							"url": "/projects/search{?name}",
-							"templated": true
+							"templated": true,
+							"action": "read"
 						},
 						{
-							"id": "new",
+							"id": "project-create",
 							"name": "links",
 							"rel": [ "add" ],
 							"url": "/projects/",
 							"action": "append",
 							"model": "n={name}\u0026d={description}\u0026o={owner}"
+						},
+						{
+							"id": "team-members-list",
+							"name": "links",
+							"rel": [ "collection" ],
+							"url": "/team",
+							"action": "read"
+						},
+						{
+							"id": "team-member-create",
+							"name": "links",
+							"rel": [ "add" ],
+							"url": "/team",
+							"action": "append",
+							"model": "m={email}"
 						}
 					]
 				},
@@ -149,26 +409,42 @@ var (
 							"action": "read"
 						},
 						{
-							"id": "list",
+							"id": "project-list",
 							"name": "links",
 							"rel": [ "collection" ],
 							"url": "/projects/",
 							"action": "read"
 						},
 						{
-							"id": "search",
+							"id": "project-search",
 							"name": "links",
 							"rel": [ "search" ],
 							"url": "/projects/search{?name}",
-							"templated": true
+							"templated": true,
+							"action": "read"
 						},
 						{
-							"id": "new",
+							"id": "project-create",
 							"name": "links",
 							"rel": [ "add" ],
 							"url": "/projects/",
 							"action": "append",
 							"model": "n={name}\u0026d={description}\u0026o={owner}"
+						},
+						{
+							"id": "team-members-list",
+							"name": "links",
+							"rel": [ "collection" ],
+							"url": "/team",
+							"action": "read"
+						},
+						{
+							"id": "team-member-create",
+							"name": "links",
+							"rel": [ "add" ],
+							"url": "/team",
+							"action": "append",
+							"model": "m={email}"
 						}
 					]
 				},
@@ -210,26 +486,42 @@ var (
 							"action": "read"
 						},
 						{
-							"id": "list",
+							"id": "project-list",
 							"name": "links",
 							"rel": [ "collection" ],
 							"url": "/projects/",
 							"action": "read"
 						},
 						{
-							"id": "search",
+							"id": "project-search",
 							"name": "links",
 							"rel": [ "search" ],
 							"url": "/projects/search{?name}",
-							"templated": true
+							"templated": true,
+							"action": "read"
 						},
 						{
-							"id": "new",
+							"id": "project-create",
 							"name": "links",
 							"rel": [ "add" ],
 							"url": "/projects/",
 							"action": "append",
 							"model": "n={name}\u0026d={description}\u0026o={owner}"
+						},
+						{
+							"id": "team-members-list",
+							"name": "links",
+							"rel": [ "collection" ],
+							"url": "/team",
+							"action": "read"
+						},
+						{
+							"id": "team-member-create",
+							"name": "links",
+							"rel": [ "add" ],
+							"url": "/team",
+							"action": "append",
+							"model": "m={email}"
 						}
 					]
 				},
@@ -273,26 +565,42 @@ var (
 							"action": "read"
 						},
 						{
-							"id": "list",
+							"id": "project-list",
 							"name": "links",
 							"rel": [ "collection" ],
 							"url": "/projects/",
 							"action": "read"
 						},
 						{
-							"id": "search",
+							"id": "project-search",
 							"name": "links",
 							"rel": [ "search" ],
 							"url": "/projects/search{?name}",
-							"templated": true
+							"templated": true,
+							"action": "read"
 						},
 						{
-							"id": "new",
+							"id": "project-create",
 							"name": "links",
 							"rel": [ "add" ],
 							"url": "/projects/",
 							"action": "append",
 							"model": "n={name}\u0026d={description}\u0026o={owner}"
+						},
+						{
+							"id": "team-members-list",
+							"name": "links",
+							"rel": [ "collection" ],
+							"url": "/team",
+							"action": "read"
+						},
+						{
+							"id": "team-member-create",
+							"name": "links",
+							"rel": [ "add" ],
+							"url": "/team",
+							"action": "append",
+							"model": "m={email}"
 						}
 					]
 				},

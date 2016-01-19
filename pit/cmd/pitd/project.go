@@ -45,6 +45,7 @@ func (ls links) MarshalUBER() (uber.Data, error) {
 				Rel:       []string{"search"},
 				URL:       "/projects/search{?name}",
 				Templated: true,
+				Action:    "read",
 				Data:      []uber.Data{},
 			},
 			uber.Data{
