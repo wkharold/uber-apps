@@ -19,30 +19,7 @@ func addmember(ctx context.Context, w http.ResponseWriter, req *http.Request) {
 
 	logger.Log(DEBUG, "addmember: %s", "enter")
 
-	ml, err := db.FindAllMembers(ctx)
-	switch {
-	case err == sql.ErrNoRows:
-		ud, err := uber.Marshal(links(struct{}{}))
-		if err != nil {
-			writeError("addmember", w, logger, "ServerError", http.StatusInternalServerError, fmt.Sprintf("Unable to marshal as UBER: %+v", err))
-			return
-		}
-
-		w.Write(ud)
-		return
-	case err != nil:
-		writeError("addmember", w, logger, "ServerError", http.StatusInternalServerError, fmt.Sprintf("Unable to retrieve members: %+v", err))
-		return
-	default:
-		ud, err := uber.Marshal(links(struct{}{}), members(ml))
-		if err != nil {
-			writeError("addmember", w, logger, "ServerError", http.StatusInternalServerError, fmt.Sprintf("Unable to marshal as UBER: %+v", err))
-			return
-		}
-
-		w.Write(ud)
-		return
-	}
+	writeError("addmember", w, logger, "NotImplemented", http.StatusNotImplemented, fmt.Sprintf("Requested action not implemented: %s", "addmember"))
 }
 
 func (m member) MarshalUBER() (uber.Data, error) {
