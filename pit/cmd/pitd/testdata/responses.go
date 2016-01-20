@@ -133,13 +133,7 @@ var (
 							[
 								{"name": "email", "value": "owner@test.net"}
 							]
-						}
-					]
-				},
-				{
-					"id": "members",
-					"data":
-					[
+						},
 						{
 							"id": "1002",
 							"rel": [ "self" ],

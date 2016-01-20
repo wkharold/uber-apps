@@ -12,6 +12,16 @@ type Member struct {
 	email string
 }
 
+// ID returns the team member's id.
+func (m Member) ID() int {
+	return m.id
+}
+
+// Email returns the team member's email address as a string.
+func (m Member) Email() string {
+	return m.email
+}
+
 // NewMember creates a new member associated with the specified email address.
 func NewMember(ctx context.Context, email string) (Member, error) {
 	db := databaseFromContext(ctx)
