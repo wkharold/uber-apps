@@ -56,6 +56,13 @@ var ptes = []projecttest{
 	{"add with incorrect tags", addmember, "/team", POST, "email=carol@members.org", nomembers, http.StatusBadRequest, ""},
 	{"add with missing tag", addmember, "/team", POST, "", nomembers, http.StatusBadRequest, ""},
 	{"add duplicate member", addmember, "/team", POST, "m=owner@test.net", onemember, http.StatusConflict, ""},
+	{"add the first issue to a project", addissue, "/project/101", POST, "n=issueone&d=issue one&p=1&r=fred@testrock.org", multiproject, http.StatusCreated, ""},
+	{"add an issue to an unknown project", addissue, "/project/001", POST, "n=issueone&d=issue one&p=1&r=fred@testrock.org", multiproject, http.StatusNotFound, ""},
+	{"add another issue to a project", addissue, "/project/102", POST, "n=issuetwo&d=issue two&p=2&r=barney@testrock.org", multiproject, http.StatusCreated, ""},
+	{"add an issue with incorrect tags", addissue, "/project/102", POST, "name=issueone&desc=issue one&priority=1&r=fred@testrock.org", multiproject, http.StatusBadRequest, ""},
+	{"add an issue with missing tag", addissue, "/project/102", POST, "n=issueone&d=issue one&r=fred@testrock.org", multiproject, http.StatusBadRequest, ""},
+	{"add an issue with tags out of order", addissue, "/project/102", POST, "r=fred@testrock.org&n=issueone&d=issue one&p=1", multiproject, http.StatusBadRequest, ""},
+	{"add an issue with an unknown reporter", addissue, "/project/101", POST, "n=issueone&d=issue one&p=1&r=pebbles@testrock.org", multiproject, http.StatusBadRequest, ""},
 }
 
 func TestProjects(t *testing.T) {
