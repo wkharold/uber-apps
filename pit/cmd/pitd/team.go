@@ -3,7 +3,9 @@ package main
 import (
 	"database/sql"
 	"fmt"
+	"io/ioutil"
 	"net/http"
+	"regexp"
 	"strconv"
 
 	"github.com/uber-apps/pit/cmd/pitd/db"
@@ -19,14 +21,32 @@ func addmember(ctx context.Context, w http.ResponseWriter, req *http.Request) {
 
 	logger.Log(DEBUG, "addmember: %s", "enter")
 
-	writeError("addmember", w, logger, "NotImplemented", http.StatusNotImplemented, fmt.Sprintf("Requested action not implemented: %s", "addmember"))
-}
+	body, err := ioutil.ReadAll(req.Body)
+	if err != nil {
+		writeError("addmember", w, logger, "ServerError", http.StatusInternalServerError, fmt.Sprintf("Cannot read HTTP request body [%+v]", err))
+		return
+	}
 
-func (m member) MarshalUBER() (uber.Data, error) {
+	re := regexp.MustCompile("m=(.+@.+)")
+	sm := re.FindStringSubmatch(string(body))
+	if sm == nil || len(sm) < 2 {
+		writeError("addmember", w, logger, "ClientError", http.StatusBadRequest, fmt.Sprintf("Member specification must be of the form: \"m={email}\" not [%s]", string(body)))
+		return
+	}
 
-	mdata := uber.Data{}
+	_, err = db.NewMember(ctx, sm[1])
+	switch {
+	case err == db.ErrMemberExists:
+		writeError("addmember", w, logger, "DuplicateMember", http.StatusConflict, fmt.Sprintf("Member exists [%s]", sm[1]))
+		return
+	case err != nil:
+		writeError("addmember", w, logger, "ServerError", http.StatusInternalServerError, fmt.Sprintf("Unable to create new project [%+v]", err))
+		return
+	default:
+		w.WriteHeader(http.StatusCreated)
+	}
 
-	return mdata, nil
+	logger.Log(DEBUG, "addmember: exis with %d", http.StatusCreated)
 }
 
 func teamlist(ctx context.Context, w http.ResponseWriter, req *http.Request) {
@@ -70,6 +90,7 @@ func teamlist(ctx context.Context, w http.ResponseWriter, req *http.Request) {
 	}
 }
 
+// MarshalUBER generates the UBER representation of a list of project team members.
 func (ms members) MarshalUBER() (uber.Data, error) {
 	md := []uber.Data{}
 
