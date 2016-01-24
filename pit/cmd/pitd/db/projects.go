@@ -58,6 +58,26 @@ func NewProject(ctx context.Context, name, description, owner string) (Project, 
 	return Project{id: id, name: name, description: description, owner: owner}, nil
 }
 
+// ID retrieves the project's id.
+func (p Project) ID() int {
+	return p.id
+}
+
+// Description retrieves the project's description.
+func (p Project) Description() string {
+	return p.description
+}
+
+// Name retrieves the project's name.
+func (p Project) Name() string {
+	return p.name
+}
+
+// Owner retrieves the project's owner.
+func (p Project) Owner() string {
+	return p.owner
+}
+
 // AddMember adds the specified member to the project's list of contributors.
 func (p Project) AddMember(ctx context.Context, member Member) error {
 	db := databaseFromContext(ctx)

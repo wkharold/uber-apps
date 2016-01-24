@@ -2,7 +2,6 @@
 package main
 
 import (
-	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	"log"
@@ -36,17 +35,29 @@ var (
 
 func init() {
 	pitctx = context.WithValue(pitctx, "logger", &leveledLogger{logger: log.New(os.Stdout, "pitd: ", log.LstdFlags), level: INFO})
-	http.Handle("/", handlers.CompressHandler(handlers.LoggingHandler(os.Stdout, router())))
+	http.Handle("/", handlers.CompressHandler(handlers.LoggingHandler(os.Stdout, router(pitctx))))
 }
 
 func main() {
 	http.ListenAndServe(":3006", nil)
 }
 
-func router() *mux.Router {
+func router(ctx context.Context) *mux.Router {
 	r := mux.NewRouter()
-	r.Handle("/_loglevel", http.Handler(httpctx.ContextAdapter{Ctx: pitctx, Handler: httpctx.ContextHandlerFunc(loglevel)})).Methods("POST")
+	r.Handle("/_loglevel", http.Handler(httpctx.ContextAdapter{Ctx: ctx, Handler: httpctx.ContextHandlerFunc(loglevel)})).Methods("POST")
+	r.Handle("/projects", http.Handler(httpctx.ContextAdapter{Ctx: ctx, Handler: httpctx.ContextHandlerFunc(projectlist)})).Methods("GET")
+	r.Handle("/projects", http.Handler(httpctx.ContextAdapter{Ctx: ctx, Handler: httpctx.ContextHandlerFunc(addproject)})).Methods("POST")
+	r.Handle("/projects/search", http.Handler(httpctx.ContextAdapter{Ctx: ctx, Handler: httpctx.ContextHandlerFunc(findproject)})).Methods("GET")
+	r.Handle("/project/{id}", http.Handler(httpctx.ContextAdapter{Ctx: ctx, Handler: httpctx.ContextHandlerFunc(getproject)})).Methods("GET")
+	r.Handle("/team", http.Handler(httpctx.ContextAdapter{Ctx: ctx, Handler: httpctx.ContextHandlerFunc(teamlist)})).Methods("GET")
+	r.Handle("/team", http.Handler(httpctx.ContextAdapter{Ctx: ctx, Handler: httpctx.ContextHandlerFunc(addmember)})).Methods("POST")
 	return r
+}
+
+func writeError(action string, w http.ResponseWriter, logger *leveledLogger, errtype string, rc int, reason string) {
+	w.WriteHeader(rc)
+	w.Write(mkError(errtype, "reason", reason))
+	logger.Log(DEBUG, "%s: exit with %d [%s]", action, rc, reason)
 }
 
 // loglevel sets the desired level of logging
@@ -88,9 +99,28 @@ func loglevel(ctx context.Context, w http.ResponseWriter, req *http.Request) {
 
 // mkError creates an Uber hypermedia document that represents an error.
 func mkError(name, rel, value string) []byte {
-	bs, err := json.Marshal(uber.Doc{uber.Body{Version: "1.0", Error: []uber.Data{uber.Data{Name: name, Rel: []string{rel}, Value: value}}}})
+	ubererr, err := uber.MarshalError(uber.Data{Name: name, Rel: []string{rel}, Value: value})
 	if err != nil {
 		panic(err)
 	}
-	return bs
+	return ubererr
+}
+
+// loggerFromContext retrieves a leveledLogger from the given context; if no leveledLogger is present a null logger
+// which writes to /dev/null is returned
+func loggerFromContext(ctx context.Context) *leveledLogger {
+	logger, ok := ctx.Value("logger").(*leveledLogger)
+	if !ok {
+		devnull, _ := os.OpenFile("/dev/null", os.O_WRONLY, os.ModePerm)
+		logger = &leveledLogger{logger: log.New(devnull, "nulllogger", log.LstdFlags), level: INFO}
+	}
+
+	return logger
+}
+
+// Log generates a log message if the specified level less than or equal to the level in force at the time of the call.
+func (ll leveledLogger) Log(level int, msg string, args ...interface{}) {
+	if ll.level <= level {
+		ll.logger.Printf(msg, args...)
+	}
 }
