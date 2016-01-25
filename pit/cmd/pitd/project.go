@@ -78,6 +78,20 @@ func (ls links) MarshalUBER() (uber.Data, error) {
 	}, nil
 }
 
+func addissue(ctx context.Context, w http.ResponseWriter, req *http.Request) {
+	logger := loggerFromContext(ctx)
+
+	logger.Log(DEBUG, "addissue: %s", "enter")
+
+	_, err := ioutil.ReadAll(req.Body)
+	if err != nil {
+		writeError("addissue", w, logger, "ServerError", http.StatusInternalServerError, fmt.Sprintf("Cannot read HTTP request body [%+v]", err))
+		return
+	}
+
+	writeError("addissue", w, logger, "NotImplemented", http.StatusNotImplemented, "addissues is not implemented")
+}
+
 func addproject(ctx context.Context, w http.ResponseWriter, req *http.Request) {
 	logger := loggerFromContext(ctx)
 
