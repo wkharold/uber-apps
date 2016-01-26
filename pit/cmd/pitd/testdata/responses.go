@@ -620,6 +620,115 @@ var (
 			]
 		}
 	}`
+	ProjectWithIssuesAndMembers = `
+	{
+		"uber":
+		{
+			"version": "1.0",
+			"data":
+			[
+				{
+					"id": "links",
+					"data":
+					[
+						{
+							"id": "alps",
+							"rel": [ "profile" ],
+							"url": "/pit-alps.xml",
+							"action": "read"
+						},
+						{
+							"id": "project-list",
+							"name": "links",
+							"rel": [ "collection" ],
+							"url": "/projects/",
+							"action": "read"
+						},
+						{
+							"id": "project-search",
+							"name": "links",
+							"rel": [ "search" ],
+							"url": "/projects/search{?name}",
+							"templated": true,
+							"action": "read"
+						},
+						{
+							"id": "project-create",
+							"name": "links",
+							"rel": [ "add" ],
+							"url": "/projects/",
+							"action": "append",
+							"model": "n={name}\u0026d={description}\u0026o={owner}"
+						},
+						{
+							"id": "team-members-list",
+							"name": "links",
+							"rel": [ "collection" ],
+							"url": "/team",
+							"action": "read"
+						},
+						{
+							"id": "team-member-create",
+							"name": "links",
+							"rel": [ "add" ],
+							"url": "/team",
+							"action": "append",
+							"model": "m={email}"
+						}
+					]
+				},
+				{
+					"id": "project",
+					"data":
+					[
+						{
+							"id": "102",
+							"name": "project two",
+							"rel": [ "self" ],
+							"url": "/project/102",
+							"data":
+							[
+								{"rel": [ "add" ], "url": "/project/102/issues", "action": "append", "model": "n={name}\u0026d={description}\u0026p={priority}\u0026r={reporter}"},
+								{"rel": [ "search" ], "url": "/project/102/search{?name}", "templated": true},
+								{"name": "description", "value": "second test project"},
+								{"name": "owner", "value": "owner@test.net"}
+								"data":
+								[
+									{
+										"id": "issues",
+										"data":
+										[
+											{
+												"id": "2001",
+												"name": "issueone",
+												"rel": [ "self" ],
+												"url": "/project/102/issue/2001"
+												"data":
+												[
+													{"rel": [ "close" ], "url": "/project/102/issue/close", "action", "model": "i=2001"},
+													{"rel": [ "return" ], "url": "/project/102/issue/return", "action", "model": "i=2001"},
+													{"name": "description", "value": "issue one"},
+													{"name": "priority", "value": 1},
+													{"name": "reporter", "value": "fred@testrock.org"}
+												]
+											},
+										]
+									},
+									{
+										"id": "contributors",
+										"data":
+										[
+										]
+									}
+								]
+							]
+						}
+					]
+				}
+			]
+		}
+	}`
+
 	UnknownProjectError = `
 	{
 		"uber":
