@@ -144,6 +144,14 @@ func addissue(ctx context.Context, w http.ResponseWriter, req *http.Request) {
 	logger.Log(DEBUG, "addissue: exit with %d", rc)
 }
 
+func issuelist(ctx context.Context, w http.ResponseWriter, req *http.Request) {
+	logger := loggerFromContext(ctx)
+
+	logger.Log(DEBUG, "issuelist: %s", "enter")
+
+	writeError("issuelist", w, logger, "NotImplemented", http.StatusNotImplemented, fmt.Sprintf("Request not implemented [%s]", "issuelist"))
+}
+
 func addproject(ctx context.Context, w http.ResponseWriter, req *http.Request) {
 	logger := loggerFromContext(ctx)
 

@@ -50,6 +50,7 @@ func router(ctx context.Context) *mux.Router {
 	r.Handle("/projects/search", http.Handler(httpctx.ContextAdapter{Ctx: ctx, Handler: httpctx.ContextHandlerFunc(findproject)})).Methods("GET")
 	r.Handle("/project/{id}", http.Handler(httpctx.ContextAdapter{Ctx: ctx, Handler: httpctx.ContextHandlerFunc(getproject)})).Methods("GET")
 	r.Handle("/project/{id}/issues", http.Handler(httpctx.ContextAdapter{Ctx: ctx, Handler: httpctx.ContextHandlerFunc(addissue)})).Methods("POST")
+	r.Handle("/project/{id}/issues", http.Handler(httpctx.ContextAdapter{Ctx: ctx, Handler: httpctx.ContextHandlerFunc(issuelist)})).Methods("GET")
 	r.Handle("/team", http.Handler(httpctx.ContextAdapter{Ctx: ctx, Handler: httpctx.ContextHandlerFunc(teamlist)})).Methods("GET")
 	r.Handle("/team", http.Handler(httpctx.ContextAdapter{Ctx: ctx, Handler: httpctx.ContextHandlerFunc(addmember)})).Methods("POST")
 	return r

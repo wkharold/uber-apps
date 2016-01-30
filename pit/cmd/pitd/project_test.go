@@ -64,6 +64,9 @@ var ptes = []projecttest{
 	{"add an issue with tags out of order", addissue, "/project/102/issues", POST, "r=fred@testrock.org&n=issueone&d=issue one&p=1", multiproject, http.StatusBadRequest, ""},
 	{"add an issue with an unknown reporter", addissue, "/project/101/issues", POST, "n=issueone&d=issue one&p=1&r=pebbles@testrock.org", multiproject, http.StatusBadRequest, ""},
 	{"add duplicate issue", addissue, "/project/103/issues", POST, "n=theissue&d=the issue&p=1&r=fred@testrock.org", multiproject, http.StatusConflict, ""},
+	{"empty issue list", issuelist, "/project/102/issues", GET, "", projectissues, http.StatusOK, testdata.IssuesProject102},
+	{"multiple issues", issuelist, "/project/103/issues", GET, "", projectissues, http.StatusOK, testdata.IssuesProject103},
+	{"unknown project issues", issuelist, "/project/001/issues", GET, "", projectissues, http.StatusNotFound, ""},
 }
 
 func TestProjects(t *testing.T) {
@@ -267,6 +270,45 @@ func oneproject() context.Context {
 
 	if _, err := tx.Exec(`INSERT INTO members VALUES (1001, "owner@test.net"), (1002, "owner@test.io");`); err != nil {
 		panic(fmt.Sprintf("cannot setup members table: [%+v]", err))
+	}
+
+	tx.Commit()
+
+	return ctx
+}
+
+func projectissues() context.Context {
+	db := createdb("projectissues")
+
+	ctx := context.Background()
+	ctx = context.WithValue(ctx, "database", db)
+	ctx = context.WithValue(ctx, "ids-chan", make(chan int))
+	ctx = context.WithValue(ctx, "logger", &leveledLogger{logger: log.New(os.Stdout, "pittest: ", log.LstdFlags), level: DEBUG})
+
+	tx, err := db.Begin()
+	if err != nil {
+		panic(fmt.Sprintf("cannot create a transaction to setup the database: [%+v]", err))
+	}
+
+	if _, err := tx.Exec(`INSERT INTO projects VALUES 
+	                      (102, "project two", "second test project", 1001),
+						  (103, "project three", "third test project", 1002);`); err != nil {
+		panic(fmt.Sprintf("cannot setup projects table: [%+v]", err))
+	}
+
+	if _, err := tx.Exec(`INSERT INTO members VALUES 
+						  (1001, "owner@test.net"), 
+						  (1002, "owner@test.io"),
+						  (1003, "fred@testrock.org"),
+						  (1004, "barney@testrock.org");`); err != nil {
+		panic(fmt.Sprintf("cannot setup members table: [%+v]", err))
+	}
+
+	if _, err := tx.Exec(`INSERT INTO issues VALUES 
+						 (1031, "issueone", "issue one", 1, "OPEN", 103, 1003),
+						 (1032, "issuetwo", "issue two", 1, "OPEN", 103, 1003),
+						 (1033, "issuethree", "issue three", 3, "CLOSED", 103, 1004);`); err != nil {
+		panic(fmt.Sprint("cannot setup issues table: [%+v]", err))
 	}
 
 	tx.Commit()
