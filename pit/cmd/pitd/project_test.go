@@ -63,6 +63,7 @@ var ptes = []projecttest{
 	{"add an issue with missing tag", addissue, "/project/102/issues", POST, "n=issueone&d=issue one&r=fred@testrock.org", multiproject, http.StatusBadRequest, ""},
 	{"add an issue with tags out of order", addissue, "/project/102/issues", POST, "r=fred@testrock.org&n=issueone&d=issue one&p=1", multiproject, http.StatusBadRequest, ""},
 	{"add an issue with an unknown reporter", addissue, "/project/101/issues", POST, "n=issueone&d=issue one&p=1&r=pebbles@testrock.org", multiproject, http.StatusBadRequest, ""},
+	{"add duplicate issue", addissue, "/project/103/issues", POST, "n=theissue&d=the issue&p=1&r=fred@testrock.org", multiproject, http.StatusConflict, ""},
 }
 
 func TestProjects(t *testing.T) {
@@ -149,12 +150,20 @@ func multiproject() context.Context {
 	if _, err := tx.Exec(`INSERT INTO projects VALUES 
 	                      (101, "project one", "first test project", 1001),
 	                      (102, "project two", "second test project", 1001),
-						  (103, "project three", "third test project", 1002);;`); err != nil {
+						  (103, "project three", "third test project", 1002);`); err != nil {
 		panic(fmt.Sprintf("cannot setup projects table: [%+v]", err))
 	}
 
-	if _, err := tx.Exec(`INSERT INTO members VALUES (1001, "owner@test.net"), (1002, "owner@test.io");`); err != nil {
+	if _, err := tx.Exec(`INSERT INTO members VALUES 
+						  (1001, "owner@test.net"), 
+						  (1002, "owner@test.io"),
+						  (1003, "fred@testrock.org"),
+						  (1004, "barney@testrock.org");`); err != nil {
 		panic(fmt.Sprintf("cannot setup members table: [%+v]", err))
+	}
+
+	if _, err := tx.Exec(`INSERT INTO issues VALUES (2001, "theissue", "the issue", 1, "OPEN", 103, 1003);`); err != nil {
+		panic(fmt.Sprint("cannot setup issues table: [%+v]", err))
 	}
 
 	tx.Commit()

@@ -80,16 +80,68 @@ func (ls links) MarshalUBER() (uber.Data, error) {
 
 func addissue(ctx context.Context, w http.ResponseWriter, req *http.Request) {
 	logger := loggerFromContext(ctx)
+	rc := http.StatusCreated // happy path return code
 
 	logger.Log(DEBUG, "addissue: %s", "enter")
 
-	_, err := ioutil.ReadAll(req.Body)
+	vars := mux.Vars(req)
+	id := vars["id"]
+
+	pid, err := strconv.Atoi(id)
+	if err != nil {
+		logger.Log(DEBUG, "addissue: strconv.Atoi(%d) failed [%+v]", id, err)
+		writeError("getproject", w, logger, "ServerError", http.StatusInternalServerError, fmt.Sprintf("Project ID must be an integer not: [%s]", id))
+		return
+	}
+
+	p, err := db.FindProjectByID(ctx, pid)
+	switch {
+	case err == sql.ErrNoRows:
+		writeError("addissue", w, logger, "RequestFailed", http.StatusNotFound, fmt.Sprintf("No project exists with specified ID: [%d]", pid))
+		return
+	case err != nil:
+		logger.Log(DEBUG, "addissue: db.FindProjectByID(ctx, %d) failed [%+v]", pid, err)
+		writeError("addissue", w, logger, "ServerError", http.StatusInternalServerError, fmt.Sprintf("Project lookup error: [%+v]", err))
+		return
+	}
+
+	body, err := ioutil.ReadAll(req.Body)
 	if err != nil {
 		writeError("addissue", w, logger, "ServerError", http.StatusInternalServerError, fmt.Sprintf("Cannot read HTTP request body [%+v]", err))
 		return
 	}
 
-	writeError("addissue", w, logger, "NotImplemented", http.StatusNotImplemented, "addissues is not implemented")
+	re := regexp.MustCompile("n=([([:word:][:space:])]+)&d=([([:word:][:space:])]+)&p=([[:digit:]])&r=(.+@.+)")
+	sm := re.FindStringSubmatch(string(body))
+	if sm == nil || len(sm) < 4 {
+		writeError("addissue", w, logger, "ClientError", http.StatusBadRequest, fmt.Sprintf("Issue specification must be of the form: \"n={name}&d={description}&p={priority}&r={reporter}\" not [%s]", string(body)))
+		return
+	}
+
+	priority, err := strconv.Atoi(sm[3])
+	if err != nil {
+		writeError("addissue", w, logger, "ClientError", http.StatusBadRequest, fmt.Sprintf("Priority must be a single digit integer [%+v]", err))
+		return
+	}
+
+	name, desc, reporter := sm[1], sm[2], sm[4]
+
+	_, err = p.OpenIssue(ctx, name, desc, reporter, priority)
+	switch {
+	case err == db.ErrIssueExists:
+		writeError("addissue", w, logger, "IssueExists", http.StatusConflict, fmt.Sprintf("Cannot create duplicate issues [%s]", sm[1]))
+		return
+	case err == db.ErrNoSuchMember:
+		writeError("addissue", w, logger, "NoSuchMember", http.StatusBadRequest, fmt.Sprintf("Issue reporter is not a project team member [%s]", reporter))
+		return
+	case err != nil:
+		writeError("addissue", w, logger, "ServerError", http.StatusInternalServerError, fmt.Sprintf("Cannot open issue [%+v]", err))
+		return
+	default:
+		w.WriteHeader(rc)
+	}
+
+	logger.Log(DEBUG, "addissue: exit with %d", rc)
 }
 
 func addproject(ctx context.Context, w http.ResponseWriter, req *http.Request) {

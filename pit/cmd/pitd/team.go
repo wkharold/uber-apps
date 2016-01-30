@@ -46,7 +46,7 @@ func addmember(ctx context.Context, w http.ResponseWriter, req *http.Request) {
 		w.WriteHeader(http.StatusCreated)
 	}
 
-	logger.Log(DEBUG, "addmember: exis with %d", http.StatusCreated)
+	logger.Log(DEBUG, "addmember: exit with %d", http.StatusCreated)
 }
 
 func teamlist(ctx context.Context, w http.ResponseWriter, req *http.Request) {
