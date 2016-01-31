@@ -660,17 +660,12 @@ var (
 							[
 								{"rel": [ "close" ], "url": "/project/103/issue/close", "action": "append", "model": "i=1031"},
 								{"rel": [ "return" ], "url": "/project/103/issue/return", "action": "append", "model": "i=1031"},
-								{"rel": [ "assign" ], "url": "/project/103/issue/1031/assignements", "action": "append", "model": "m={member}"},
+								{"rel": [ "assignments" ], "url": "/project/103/issue/1031/assignments", "action": "read", "transclude": true},
+								{"rel": [ "assign" ], "url": "/project/103/issue/1031/assignments", "action": "append", "model": "m={member}"},
 								{"name": "description", "value": "issue one"},
 								{"name": "priority", "value": "1"},
 								{"name": "status", "value": "OPEN"},
-								{"name": "reporter", "value": "fred@testrock.org"},
-								{
-									"id": "assignments",
-									"rel": [ "self" ],
-									"url": "/project/102/issue/1031/assignments",
-									"action": "read"
-								}
+								{"name": "reporter", "value": "fred@testrock.org"}
 							]
 						},
 						{
@@ -683,17 +678,12 @@ var (
 							[
 								{"rel": [ "close" ], "url": "/project/103/issue/close", "action": "append", "model": "i=1032"},
 								{"rel": [ "return" ], "url": "/project/103/issue/return", "action": "append", "model": "i=1032"},
-								{"rel": [ "assign" ], "url": "/project/103/issue/1032/assignements", "action": "append", "model": "m={member}"},
+								{"rel": [ "assignments" ], "url": "/project/103/issue/1032/assignments", "action": "read", "transclude": true},
+								{"rel": [ "assign" ], "url": "/project/103/issue/1032/assignments", "action": "append", "model": "m={member}"},
 								{"name": "description", "value": "issue two"},
 								{"name": "priority", "value": "1"},
 								{"name": "status", "value": "OPEN"},
-								{"name": "reporter", "value": "fred@testrock.org"},
-								{
-									"id": "assignments",
-									"rel": [ "self" ],
-									"url": "/project/103/issue/1032/assignments",
-									"action": "read"
-								}
+								{"name": "reporter", "value": "fred@testrock.org"}
 							]
 						},
 						{
@@ -706,17 +696,12 @@ var (
 							[
 								{"rel": [ "close" ], "url": "/project/103/issue/close", "action": "append", "model": "i=1033"},
 								{"rel": [ "return" ], "url": "/project/103/issue/return", "action": "append", "model": "i=1033"},
-								{"rel": [ "assign" ], "url": "/project/103/issue/1033/assignements", "action": "append", "model": "m={member}"},
+								{"rel": [ "assignments" ], "url": "/project/103/issue/1033/assignments", "action": "read", "transclude": true},
+								{"rel": [ "assign" ], "url": "/project/103/issue/1033/assignments", "action": "append", "model": "m={member}"},
 								{"name": "description", "value": "issue three"},
 								{"name": "priority", "value": "3"},
 								{"name": "status", "value": "CLOSED"},
-								{"name": "reporter", "value": "barney@testrock.org"},
-								{
-									"id": "assignments",
-									"rel": [ "self" ],
-									"url": "/project/103/issue/1033/assignments",
-									"action": "read"
-								}
+								{"name": "reporter", "value": "barney@testrock.org"}
 							]
 						}
 					]
@@ -817,7 +802,7 @@ var (
 												[
 													{"rel": [ "close" ], "url": "/project/102/issue/close", "action": "append", "model": "i=2001"},
 													{"rel": [ "return" ], "url": "/project/102/issue/return", "action": "append", "model": "i=2001"},
-													{"rel": [ "assign" ], "url": "/project/102/issue/2001/assignements", "action": "append", "model": "m={member}"},d
+													{"rel": [ "assign" ], "url": "/project/102/issue/2001/assignments", "action": "append", "model": "m={member}"},d
 													{"name": "description", "value": "issue one"},
 													{"name": "priority", "value": "1"},
 													{"name": "status", "value": "OPEN"},

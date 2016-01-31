@@ -212,7 +212,8 @@ func (is issues) MarshalUBER() (uber.Data, error) {
 			Data: []uber.Data{
 				{Rel: []string{"close"}, URL: fmt.Sprintf("/project/%d/issue/close", is.pid), Action: "append", Model: fmt.Sprintf("i=%d", i.ID())},
 				{Rel: []string{"return"}, URL: fmt.Sprintf("/project/%d/issue/return", is.pid), Action: "append", Model: fmt.Sprintf("i=%d", i.ID())},
-				{Rel: []string{"assign"}, URL: fmt.Sprintf("/project/%d/issue/%d/assign", is.pid, i.ID()), Action: "append", Model: "m={member}"},
+				{Rel: []string{"assignments"}, URL: fmt.Sprintf("/project/%d/issue/%d/assignments", is.pid, i.ID()), Action: "read", Transclude: true},
+				{Rel: []string{"assign"}, URL: fmt.Sprintf("/project/%d/issue/%d/assignments", is.pid, i.ID()), Action: "append", Model: "m={member}"},
 				{Name: "description", Value: i.Description()},
 				{Name: "priority", Value: strconv.Itoa(i.Priority())},
 				{Name: "status", Value: i.Status()},
