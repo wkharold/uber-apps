@@ -43,6 +43,7 @@ func addmember(ctx context.Context, w http.ResponseWriter, req *http.Request) {
 		writeError("addmember", w, logger, "ServerError", http.StatusInternalServerError, fmt.Sprintf("Unable to create new project [%+v]", err))
 		return
 	default:
+		w.Header().Set("Content-Type", "application/vnd.uber+json")
 		w.WriteHeader(http.StatusCreated)
 	}
 
@@ -65,6 +66,7 @@ func teamlist(ctx context.Context, w http.ResponseWriter, req *http.Request) {
 
 		rc := http.StatusOK
 
+		w.Header().Set("Content-Type", "application/vnd.uber+json")
 		w.WriteHeader(rc)
 		w.Write(ud)
 
@@ -82,6 +84,7 @@ func teamlist(ctx context.Context, w http.ResponseWriter, req *http.Request) {
 
 		rc := http.StatusOK
 
+		w.Header().Set("Content-Type", "application/vnd.uber+json")
 		w.WriteHeader(rc)
 		w.Write(ud)
 
