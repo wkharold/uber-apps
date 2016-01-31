@@ -145,6 +145,7 @@ func addissue(ctx context.Context, w http.ResponseWriter, req *http.Request) {
 		writeError("addissue", w, logger, "ServerError", http.StatusInternalServerError, fmt.Sprintf("Cannot open issue [%+v]", err))
 		return
 	default:
+		w.Header().Set("Content-Type", "application/vnd.uber+json")
 		w.WriteHeader(rc)
 	}
 
@@ -181,6 +182,15 @@ func issuelist(ctx context.Context, w http.ResponseWriter, req *http.Request) {
 	il, err := db.FindIssuesByProject(ctx, pid)
 	switch {
 	case err == sql.ErrNoRows:
+		ud, err := uber.Marshal(issues{il: []db.Issue{}, pid: pid})
+		if err != nil {
+			writeError("issuelist", w, logger, "ServerError", http.StatusInternalServerError, fmt.Sprintf("Unable to marshal as UBER: [%+v]", err))
+			return
+		}
+
+		w.Header().Set("Content-Type", "application/vnd.uber+json")
+		w.WriteHeader(rc)
+		w.Write(ud)
 		return
 	case err != nil:
 		logger.Log(DEBUG, "issuelist: db.FindIssuesByProject(ctx, %d) failed [%+v]", pid, err)
@@ -195,6 +205,8 @@ func issuelist(ctx context.Context, w http.ResponseWriter, req *http.Request) {
 
 		logger.Log(DEBUG, "issuelist: exit with %d [%s]", rc, string(ud))
 
+		w.Header().Set("Content-Type", "application/vnd.uber+json")
+		w.WriteHeader(rc)
 		w.Write(ud)
 	}
 }
@@ -255,6 +267,7 @@ func addproject(ctx context.Context, w http.ResponseWriter, req *http.Request) {
 		return
 	}
 
+	w.Header().Set("Content-Type", "application/vnd.uber+json")
 	w.WriteHeader(http.StatusCreated)
 
 	logger.Log(DEBUG, "addproject: exit with %d", http.StatusCreated)
@@ -287,6 +300,7 @@ func findproject(ctx context.Context, w http.ResponseWriter, req *http.Request) 
 			return
 		}
 
+		w.Header().Set("Content-Type", "application/vnd.uber+json")
 		w.Write(ud)
 	}
 
@@ -325,6 +339,7 @@ func getproject(ctx context.Context, w http.ResponseWriter, req *http.Request) {
 			return
 		}
 
+		w.Header().Set("Content-Type", "application/vnd.uber+json")
 		w.Write(ud)
 	}
 
@@ -377,6 +392,7 @@ func projectlist(ctx context.Context, w http.ResponseWriter, req *http.Request) 
 
 	logger.Log(DEBUG, "projectlist: exit with %d [%s]", http.StatusOK, string(ud))
 
+	w.Header().Set("Content-Type", "application/vnd.uber+json")
 	w.Write(ud)
 }
 
