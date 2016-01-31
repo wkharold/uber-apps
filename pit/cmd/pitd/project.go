@@ -17,6 +17,13 @@ import (
 
 type links struct{}
 
+type issues struct {
+	il  []db.Issue
+	pid int
+}
+
+type issue db.Issue
+
 type projects []db.Project
 type project db.Project
 
@@ -90,7 +97,7 @@ func addissue(ctx context.Context, w http.ResponseWriter, req *http.Request) {
 	pid, err := strconv.Atoi(id)
 	if err != nil {
 		logger.Log(DEBUG, "addissue: strconv.Atoi(%d) failed [%+v]", id, err)
-		writeError("getproject", w, logger, "ServerError", http.StatusInternalServerError, fmt.Sprintf("Project ID must be an integer not: [%s]", id))
+		writeError("addissue", w, logger, "ServerError", http.StatusInternalServerError, fmt.Sprintf("Project ID must be an integer not: [%s]", id))
 		return
 	}
 
@@ -146,10 +153,81 @@ func addissue(ctx context.Context, w http.ResponseWriter, req *http.Request) {
 
 func issuelist(ctx context.Context, w http.ResponseWriter, req *http.Request) {
 	logger := loggerFromContext(ctx)
+	rc := http.StatusOK
 
 	logger.Log(DEBUG, "issuelist: %s", "enter")
 
-	writeError("issuelist", w, logger, "NotImplemented", http.StatusNotImplemented, fmt.Sprintf("Request not implemented [%s]", "issuelist"))
+	vars := mux.Vars(req)
+	id := vars["id"]
+
+	pid, err := strconv.Atoi(id)
+	if err != nil {
+		logger.Log(DEBUG, "issuelist: strconv.Atoi(%d) failed [%+v]", id, err)
+		writeError("issuelist", w, logger, "ServerError", http.StatusInternalServerError, fmt.Sprintf("Project ID must be an integer not: [%s]", id))
+		return
+	}
+
+	_, err = db.FindProjectByID(ctx, pid)
+	switch {
+	case err == sql.ErrNoRows:
+		writeError("issuelist", w, logger, "RequestFailed", http.StatusNotFound, fmt.Sprintf("No project exists with specified ID: [%d]", pid))
+		return
+	case err != nil:
+		logger.Log(DEBUG, "issuelist: db.FindProjectByID(ctx, %d) failed [%+v]", pid, err)
+		writeError("issuelist", w, logger, "ServerError", http.StatusInternalServerError, fmt.Sprintf("Project lookup error: [%+v]", err))
+		return
+	}
+
+	il, err := db.FindIssuesByProject(ctx, pid)
+	switch {
+	case err == sql.ErrNoRows:
+		return
+	case err != nil:
+		logger.Log(DEBUG, "issuelist: db.FindIssuesByProject(ctx, %d) failed [%+v]", pid, err)
+		writeError("issuelist", w, logger, "ServerError", http.StatusInternalServerError, fmt.Sprintf("Project lookup error: [%+v]", err))
+		return
+	default:
+		ud, err := uber.Marshal(issues{il: il, pid: pid})
+		if err != nil {
+			writeError("issuelist", w, logger, "ServerError", http.StatusInternalServerError, fmt.Sprintf("Unable to marshal as UBER: %+v", err))
+			return
+		}
+
+		logger.Log(DEBUG, "issuelist: exit with %d [%s]", rc, string(ud))
+
+		w.Write(ud)
+	}
+}
+
+func (is issues) MarshalUBER() (uber.Data, error) {
+	ic := []uber.Data{}
+
+	for _, i := range is.il {
+		ud := uber.Data{
+			ID:     strconv.Itoa(i.ID()),
+			Name:   i.Name(),
+			Rel:    []string{"self"},
+			URL:    fmt.Sprintf("/project/%d/issue/%d", is.pid, i.ID()),
+			Action: "read",
+			Data: []uber.Data{
+				{Rel: []string{"close"}, URL: fmt.Sprintf("/project/%d/issue/close", is.pid), Action: "append", Model: fmt.Sprintf("i=%d", i.ID())},
+				{Rel: []string{"return"}, URL: fmt.Sprintf("/project/%d/issue/return", is.pid), Action: "append", Model: fmt.Sprintf("i=%d", i.ID())},
+				{Rel: []string{"assign"}, URL: fmt.Sprintf("/project/%d/issue/%d/assign", is.pid, i.ID()), Action: "append", Model: "m={member}"},
+				{Name: "description", Value: i.Description()},
+				{Name: "priority", Value: strconv.Itoa(i.Priority())},
+				{Name: "status", Value: i.Status()},
+				{Name: "reporter", Value: i.Reporter()},
+			},
+		}
+		ic = append(ic, ud)
+	}
+
+	return uber.Data{
+		ID:     "issues",
+		Rel:    []string{"self"},
+		URL:    fmt.Sprintf("/project/%d/issues", is.pid),
+		Action: "read",
+		Data:   ic}, nil
 }
 
 func addproject(ctx context.Context, w http.ResponseWriter, req *http.Request) {

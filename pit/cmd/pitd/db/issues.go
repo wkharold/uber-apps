@@ -17,6 +17,41 @@ type Issue struct {
 	reporter    string
 }
 
+// Description retrieves the description of an issue.
+func (i Issue) Description() string {
+	return i.description
+}
+
+// ID retrieves an issue's id.
+func (i Issue) ID() int {
+	return i.id
+}
+
+// Name retrieves the name of an issue.
+func (i Issue) Name() string {
+	return i.name
+}
+
+// Priority retrieves an issue's priority.
+func (i Issue) Priority() int {
+	return i.priority
+}
+
+// Project returns the id of the project the issue belongs to.
+func (i Issue) Project() int {
+	return i.project
+}
+
+// Reporter retrieves the email address of the team member who reported the issue.
+func (i Issue) Reporter() string {
+	return i.reporter
+}
+
+// Status retrieves the status of the issue.
+func (i Issue) Status() string {
+	return i.status
+}
+
 // FindAll retrieves a list of all the issues in the repository.
 func FindAllIssues(ctx context.Context) ([]Issue, error) {
 	db := databaseFromContext(ctx)
