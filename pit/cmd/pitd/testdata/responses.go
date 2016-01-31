@@ -620,6 +620,238 @@ var (
 			]
 		}
 	}`
+	IssuesProject102 = `
+	{
+		"uber":
+		{
+			"version": "1.0",
+			"data":
+			[
+				{
+					"id": "issues",
+					"rel": [ "self" ],
+					"url": "/project/102/issues",
+					"action": "read"
+				}
+			]
+		}
+	}`
+	IssuesProject103 = `
+	{
+		"uber":
+		{
+			"version": "1.0",
+			"data":
+			[
+				{
+					"id": "issues",
+					"rel": [ "self" ],
+					"url": "/project/103/issues",
+					"action": "read",
+					"data": 
+					[
+						{
+							"id": "1031",
+							"name": "issueone",
+							"rel": [ "self" ],
+							"url": "/project/103/issue/1031",
+							"action": "read",
+							"data":
+							[
+								{"rel": [ "close" ], "url": "/project/103/issue/close", "action": "append", "model": "i=1031"},
+								{"rel": [ "return" ], "url": "/project/103/issue/return", "action": "append", "model": "i=1031"},
+								{"rel": [ "assignments" ], "url": "/project/103/issue/1031/assignments", "action": "read", "transclude": true},
+								{"rel": [ "assign" ], "url": "/project/103/issue/1031/assignments", "action": "append", "model": "m={member}"},
+								{"name": "description", "value": "issue one"},
+								{"name": "priority", "value": "1"},
+								{"name": "status", "value": "OPEN"},
+								{"name": "reporter", "value": "fred@testrock.org"}
+							]
+						},
+						{
+							"id": "1032",
+							"name": "issuetwo",
+							"rel": [ "self" ],
+							"url": "/project/103/issue/1032",
+							"action": "read",
+							"data":
+							[
+								{"rel": [ "close" ], "url": "/project/103/issue/close", "action": "append", "model": "i=1032"},
+								{"rel": [ "return" ], "url": "/project/103/issue/return", "action": "append", "model": "i=1032"},
+								{"rel": [ "assignments" ], "url": "/project/103/issue/1032/assignments", "action": "read", "transclude": true},
+								{"rel": [ "assign" ], "url": "/project/103/issue/1032/assignments", "action": "append", "model": "m={member}"},
+								{"name": "description", "value": "issue two"},
+								{"name": "priority", "value": "1"},
+								{"name": "status", "value": "OPEN"},
+								{"name": "reporter", "value": "fred@testrock.org"}
+							]
+						},
+						{
+							"id": "1033",
+							"name": "issuethree",
+							"rel": [ "self" ],
+							"url": "/project/103/issue/1033",
+							"action": "read",
+							"data":
+							[
+								{"rel": [ "close" ], "url": "/project/103/issue/close", "action": "append", "model": "i=1033"},
+								{"rel": [ "return" ], "url": "/project/103/issue/return", "action": "append", "model": "i=1033"},
+								{"rel": [ "assignments" ], "url": "/project/103/issue/1033/assignments", "action": "read", "transclude": true},
+								{"rel": [ "assign" ], "url": "/project/103/issue/1033/assignments", "action": "append", "model": "m={member}"},
+								{"name": "description", "value": "issue three"},
+								{"name": "priority", "value": "3"},
+								{"name": "status", "value": "CLOSED"},
+								{"name": "reporter", "value": "barney@testrock.org"}
+							]
+						}
+					]
+				}
+			]
+		}
+	}`
+	ProjectWithIssuesAndMembers = `
+	{
+		"uber":
+		{
+			"version": "1.0",
+			"data":
+			[
+				{
+					"id": "links",
+					"data":
+					[
+						{
+							"id": "alps",
+							"rel": [ "profile" ],
+							"url": "/pit-alps.xml",
+							"action": "read"
+						},
+						{
+							"id": "project-list",
+							"name": "links",
+							"rel": [ "collection" ],
+							"url": "/projects/",
+							"action": "read"
+						},
+						{
+							"id": "project-search",
+							"name": "links",
+							"rel": [ "search" ],
+							"url": "/projects/search{?name}",
+							"templated": true,
+							"action": "read"
+						},
+						{
+							"id": "project-create",
+							"name": "links",
+							"rel": [ "add" ],
+							"url": "/projects/",
+							"action": "append",
+							"model": "n={name}\u0026d={description}\u0026o={owner}"
+						},
+						{
+							"id": "team-members-list",
+							"name": "links",
+							"rel": [ "collection" ],
+							"url": "/team",
+							"action": "read"
+						},
+						{
+							"id": "team-member-create",
+							"name": "links",
+							"rel": [ "add" ],
+							"url": "/team",
+							"action": "append",
+							"model": "m={email}"
+						}
+					]
+				},
+				{
+					"id": "project",
+					"data":
+					[
+						{
+							"id": "102",
+							"name": "project two",
+							"rel": [ "self" ],
+							"url": "/project/102",
+							"action": "read",
+							"data":
+							[
+								{"rel": [ "add" ], "url": "/project/102/issues", "action": "append", "model": "n={name}\u0026d={description}\u0026p={priority}\u0026r={reporter}"},
+								{"rel": [ "collection" ], "url": "/project/102/issues", "action": "read"},
+								{"rel": [ "search" ], "url": "/project/102/search{?name}", "templated": true, "action": "read"},
+								{"name": "description", "value": "second test project"},
+								{"name": "owner", "value": "owner@test.net"}
+								"data":
+								[
+									{
+										"id": "issues",
+										"rel": [ "self" ],
+										"url": "/project/102/issues",
+										"action": "read",
+										"data":
+										[
+											{
+												"id": "2001",
+												"name": "issueone",
+												"rel": [ "self" ],
+												"url": "/project/102/issue/2001",
+												"action": "read",
+												"data":
+												[
+													{"rel": [ "close" ], "url": "/project/102/issue/close", "action": "append", "model": "i=2001"},
+													{"rel": [ "return" ], "url": "/project/102/issue/return", "action": "append", "model": "i=2001"},
+													{"rel": [ "assign" ], "url": "/project/102/issue/2001/assignments", "action": "append", "model": "m={member}"},d
+													{"name": "description", "value": "issue one"},
+													{"name": "priority", "value": "1"},
+													{"name": "status", "value": "OPEN"},
+													{"name": "reporter", "value": "fred@testrock.org"},
+													{
+														"id": "assignments",
+														"rel": [ "self" ],
+														"url": "/project/102/issue/2001/assignments",
+														"action": "read",
+														"data":
+														[
+															{
+																{"rel": [ "remove" ], "url": "/project/102/issue/2001/assignment/1006", "action": "delete"},
+																{"rel": [ "member" ], "url": "/team/1006", "action": "read"},
+																{"name": "email", "value": "alice@members.com"}
+															}
+														]
+													}
+												]
+											},
+										]
+									},
+									{
+										"id": "contributors",
+										"rel": [ "self" ],
+										"url": "/project/102/contributors",
+										"action": "read",
+										"data":
+										[
+											{
+												"id": "1006",
+												"rel": [ "self" ],
+												"url": "/project/102/contributor/1006",
+												"data":
+												[
+													{"rel": [ "unassign" ], "url": "/project/102/contributor/unassign", "action": "append", "model": "m=alice@members.com"},
+													{"name": "email", "value": "alice@members.com"}
+												]
+											}
+										]
+									}
+								]
+							]
+						}
+					]
+				}
+			]
+		}
+	}`
 	UnknownProjectError = `
 	{
 		"uber":

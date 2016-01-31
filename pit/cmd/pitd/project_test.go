@@ -56,6 +56,17 @@ var ptes = []projecttest{
 	{"add with incorrect tags", addmember, "/team", POST, "email=carol@members.org", nomembers, http.StatusBadRequest, ""},
 	{"add with missing tag", addmember, "/team", POST, "", nomembers, http.StatusBadRequest, ""},
 	{"add duplicate member", addmember, "/team", POST, "m=owner@test.net", onemember, http.StatusConflict, ""},
+	{"add the first issue to a project", addissue, "/project/101/issues", POST, "n=issueone&d=issue one&p=1&r=fred@testrock.org", multiproject, http.StatusCreated, ""},
+	{"add an issue to an unknown project", addissue, "/project/001/issues", POST, "n=issueone&d=issue one&p=1&r=fred@testrock.org", multiproject, http.StatusNotFound, ""},
+	{"add another issue to a project", addissue, "/project/102/issues", POST, "n=issuetwo&d=issue two&p=2&r=barney@testrock.org", multiproject, http.StatusCreated, ""},
+	{"add an issue with incorrect tags", addissue, "/project/102/issues", POST, "name=issueone&desc=issue one&priority=1&r=fred@testrock.org", multiproject, http.StatusBadRequest, ""},
+	{"add an issue with missing tag", addissue, "/project/102/issues", POST, "n=issueone&d=issue one&r=fred@testrock.org", multiproject, http.StatusBadRequest, ""},
+	{"add an issue with tags out of order", addissue, "/project/102/issues", POST, "r=fred@testrock.org&n=issueone&d=issue one&p=1", multiproject, http.StatusBadRequest, ""},
+	{"add an issue with an unknown reporter", addissue, "/project/101/issues", POST, "n=issueone&d=issue one&p=1&r=pebbles@testrock.org", multiproject, http.StatusBadRequest, ""},
+	{"add duplicate issue", addissue, "/project/103/issues", POST, "n=theissue&d=the issue&p=1&r=fred@testrock.org", multiproject, http.StatusConflict, ""},
+	{"empty issue list", issuelist, "/project/102/issues", GET, "", projectissues, http.StatusOK, testdata.IssuesProject102},
+	{"multiple issues", issuelist, "/project/103/issues", GET, "", projectissues, http.StatusOK, testdata.IssuesProject103},
+	{"unknown project issues", issuelist, "/project/001/issues", GET, "", projectissues, http.StatusNotFound, ""},
 }
 
 func TestProjects(t *testing.T) {
@@ -142,12 +153,20 @@ func multiproject() context.Context {
 	if _, err := tx.Exec(`INSERT INTO projects VALUES 
 	                      (101, "project one", "first test project", 1001),
 	                      (102, "project two", "second test project", 1001),
-						  (103, "project three", "third test project", 1002);;`); err != nil {
+						  (103, "project three", "third test project", 1002);`); err != nil {
 		panic(fmt.Sprintf("cannot setup projects table: [%+v]", err))
 	}
 
-	if _, err := tx.Exec(`INSERT INTO members VALUES (1001, "owner@test.net"), (1002, "owner@test.io");`); err != nil {
+	if _, err := tx.Exec(`INSERT INTO members VALUES 
+						  (1001, "owner@test.net"), 
+						  (1002, "owner@test.io"),
+						  (1003, "fred@testrock.org"),
+						  (1004, "barney@testrock.org");`); err != nil {
 		panic(fmt.Sprintf("cannot setup members table: [%+v]", err))
+	}
+
+	if _, err := tx.Exec(`INSERT INTO issues VALUES (2001, "theissue", "the issue", 1, "OPEN", 103, 1003);`); err != nil {
+		panic(fmt.Sprint("cannot setup issues table: [%+v]", err))
 	}
 
 	tx.Commit()
@@ -251,6 +270,45 @@ func oneproject() context.Context {
 
 	if _, err := tx.Exec(`INSERT INTO members VALUES (1001, "owner@test.net"), (1002, "owner@test.io");`); err != nil {
 		panic(fmt.Sprintf("cannot setup members table: [%+v]", err))
+	}
+
+	tx.Commit()
+
+	return ctx
+}
+
+func projectissues() context.Context {
+	db := createdb("projectissues")
+
+	ctx := context.Background()
+	ctx = context.WithValue(ctx, "database", db)
+	ctx = context.WithValue(ctx, "ids-chan", make(chan int))
+	ctx = context.WithValue(ctx, "logger", &leveledLogger{logger: log.New(os.Stdout, "pittest: ", log.LstdFlags), level: DEBUG})
+
+	tx, err := db.Begin()
+	if err != nil {
+		panic(fmt.Sprintf("cannot create a transaction to setup the database: [%+v]", err))
+	}
+
+	if _, err := tx.Exec(`INSERT INTO projects VALUES 
+	                      (102, "project two", "second test project", 1001),
+						  (103, "project three", "third test project", 1002);`); err != nil {
+		panic(fmt.Sprintf("cannot setup projects table: [%+v]", err))
+	}
+
+	if _, err := tx.Exec(`INSERT INTO members VALUES 
+						  (1001, "owner@test.net"), 
+						  (1002, "owner@test.io"),
+						  (1003, "fred@testrock.org"),
+						  (1004, "barney@testrock.org");`); err != nil {
+		panic(fmt.Sprintf("cannot setup members table: [%+v]", err))
+	}
+
+	if _, err := tx.Exec(`INSERT INTO issues VALUES 
+						 (1031, "issueone", "issue one", 1, "OPEN", 103, 1003),
+						 (1032, "issuetwo", "issue two", 1, "OPEN", 103, 1003),
+						 (1033, "issuethree", "issue three", 3, "CLOSED", 103, 1004);`); err != nil {
+		panic(fmt.Sprint("cannot setup issues table: [%+v]", err))
 	}
 
 	tx.Commit()
