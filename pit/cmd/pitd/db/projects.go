@@ -103,29 +103,58 @@ func (p Project) AddMember(ctx context.Context, member Member) error {
 		return ErrNoSuchMember
 	}
 
-	rows, err := tx.Query("SELECT members.ID, members.Email FROM members FULL JOIN contributors ON (members.ID == contributors.MID) WHERE contributors.PID == $1 ORDER BY members.ID;", p.id)
-	if err != nil {
-		return err
-	}
-
-	members, err := collectMembers(ctx, rows)
-	if err != nil {
-		return err
-	}
-
-	for _, m := range members {
-		if m == member {
-			// Already a member, nothing to do
-			return nil
+	err = tx.QueryRow("SELECT MID FROM contributors WHERE PID == $1 AND MID == $2", p.id, member.id).Scan(&mid)
+	switch {
+	case err != nil && err == sql.ErrNoRows:
+		_, err = tx.Exec("INSERT INTO contributors VALUES ($1, $2)", p.id, member.id)
+		if err != nil {
+			return err
 		}
-	}
-
-	_, err = tx.Exec("INSERT INTO contributors VALUES ($1, $2)", p.id, member.id)
-	if err != nil {
+	case err != nil:
 		return err
 	}
 
 	added = true
+
+	return nil
+}
+
+// RemoveMember removes the specified team member from the list of project contributors.
+func (p Project) RemoveMember(ctx context.Context, memberid int) error {
+	db := databaseFromContext(ctx)
+
+	removed := false
+
+	tx, err := db.Begin()
+	if err != nil {
+		return err
+	}
+	defer func() {
+		switch removed {
+		case true:
+			tx.Commit()
+		case false:
+			tx.Rollback()
+		}
+	}()
+
+	var mid int
+	err = tx.QueryRow("SELECT ID FROM members WHERE ID == $1", memberid).Scan(&mid)
+	if err != nil {
+		return ErrNoSuchMember
+	}
+
+	err = tx.QueryRow("SELECT MID FROM contributors WHERE PID == $1 AND MID == $2", p.id, memberid).Scan(&mid)
+	if err != nil {
+		return ErrNonContributingMember
+	}
+
+	_, err = tx.Exec("DELETE FROM contributors WHERE PID == $1 AND MID == $2", p.id, memberid)
+	if err != nil {
+		return err
+	}
+
+	removed = true
 
 	return nil
 }

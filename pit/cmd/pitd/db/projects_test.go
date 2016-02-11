@@ -81,6 +81,15 @@ type openProjectIssueTest struct {
 	err         error
 }
 
+type removeMemberTest struct {
+	description string
+	project     Project
+	member      Member
+	ctxfn       func() context.Context
+	postmembers []Member
+	err         error
+}
+
 var (
 	issueonep2 = Issue{
 		id: 2012, name: "issueone", description: "issue one", priority: 2, status: Open, project: 102, reporter: "fred@testrock.org",
@@ -153,6 +162,11 @@ var (
 		{"OpenIssue", ptwo.OpenIssue, "issueseven", "issue seven", "barney@testrock.org", 2, 2007, projectissues, issueseven, []Issue{issuetwo, issueseven}, nil},
 		{"OpenIssue same name, different projects", ptwo.OpenIssue, "issueone", "issue one", "fred@testrock.org", 2, 2012, projectissues, issueonep2, []Issue{issuetwo, issueonep2}, nil},
 	}
+	removeMemberTests = []removeMemberTest{
+		{"RemoveMember no such member", pone, Member{id: 42, email: "fred.c.dobbs@sierramadre.gld"}, emptytables, []Member{}, ErrNoSuchMember},
+		{"RemoveMember only member", ptwo, alice, contributors, []Member{}, nil},
+		{"RemoveMember remove a member", pthree, ted, contributors, []Member{carol, alice}, nil},
+	}
 )
 
 func TestAddMember(t *testing.T) {
@@ -184,6 +198,7 @@ func TestAddMember(t *testing.T) {
 		dropdb(db)
 	}
 }
+
 func TestContributors(t *testing.T) {
 	for _, nt := range contributorstests {
 		ctx := nt.ctxfn()
@@ -363,6 +378,36 @@ func TestOpenProjectIssue(t *testing.T) {
 			if !sameissues(is, nt.collection) {
 				t.Errorf("%s: expected %+v, got %+v", nt.description, nt.collection, is)
 				break
+			}
+		}
+
+		dropdb(db)
+	}
+}
+
+func TestRemoveMember(t *testing.T) {
+	for _, nt := range removeMemberTests {
+		ctx := nt.ctxfn()
+		db, ok := ctx.Value("database").(*sql.DB)
+		if !ok {
+			t.Fatalf("%s: no database in context")
+		}
+
+		err := nt.project.RemoveMember(ctx, nt.member.id)
+		switch {
+		case err != nil && err != nt.err:
+			t.Errorf("%s: unexpected error [%+v]", nt.description, err)
+		case err != nil:
+			break
+		default:
+			members, err := nt.project.Contributors(ctx)
+			if err != nil {
+				t.Errorf("%s: cannot retrieve contributors: [%+v]", nt.description, err)
+				break
+			}
+
+			if !samemembers(members, nt.postmembers) {
+				t.Errorf("%s: expected %+v, got %+v", nt.description, nt.postmembers, members)
 			}
 		}
 
