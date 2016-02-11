@@ -838,7 +838,7 @@ var (
 												"url": "/project/102/contributor/1006",
 												"data":
 												[
-													{"rel": [ "unassign" ], "url": "/project/102/contributor/unassign", "action": "append", "model": "m=alice@members.com"},
+													{"rel": [ "unassign" ], "url": "/project/102/contributor/1006", "action": "delete"},
 													{"name": "email", "value": "alice@members.com"}
 												]
 											}
