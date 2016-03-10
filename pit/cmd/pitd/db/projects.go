@@ -149,6 +149,23 @@ func (p Project) RemoveMember(ctx context.Context, memberid int) error {
 		return ErrNonContributingMember
 	}
 
+	rows, err := tx.Query("SELECT PI.IID FROM (SELECT ID AS IID from issues WHERE Project == $1) AS PI LEFT OUTER JOIN assignments ON (assignments.IID == PI.IID) WHERE assignments.MID == $2;", p.id, memberid)
+	if err != nil {
+		return err
+	}
+
+	defer rows.Close()
+
+	for rows.Next() {
+		var iid int
+
+		if err := rows.Scan(&iid); err != nil {
+			return err
+		}
+
+		return ErrMemberHasIssues
+	}
+
 	_, err = tx.Exec("DELETE FROM contributors WHERE PID == $1 AND MID == $2", p.id, memberid)
 	if err != nil {
 		return err

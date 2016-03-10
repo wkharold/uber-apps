@@ -166,6 +166,7 @@ var (
 		{"RemoveMember no such member", pone, Member{id: 42, email: "fred.c.dobbs@sierramadre.gld"}, emptytables, []Member{}, ErrNoSuchMember},
 		{"RemoveMember only member", ptwo, alice, contributors, []Member{}, nil},
 		{"RemoveMember remove a member", pthree, ted, contributors, []Member{carol, alice}, nil},
+		{"RemoveMember member with assignment", pthree, carol, alltheissues, []Member{carol, ted, alice}, ErrMemberHasIssues},
 	}
 )
 

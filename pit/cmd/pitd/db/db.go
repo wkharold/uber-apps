@@ -20,6 +20,7 @@ const (
 var (
 	ErrIssueExists           = errors.New("Issue already exists")
 	ErrMemberExists          = errors.New("Member already exists")
+	ErrMemberHasIssues       = errors.New("Member has issues assigned")
 	ErrNonContributingMember = errors.New("Member is not a project contributor")
 	ErrNoSuchIssue           = errors.New("No such issue")
 	ErrNoSuchMember          = errors.New("No such member")
