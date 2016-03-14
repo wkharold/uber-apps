@@ -802,7 +802,7 @@ var (
 												[
 													{"rel": [ "close" ], "url": "/project/102/issue/close", "action": "append", "model": "i=2001"},
 													{"rel": [ "return" ], "url": "/project/102/issue/return", "action": "append", "model": "i=2001"},
-													{"rel": [ "assign" ], "url": "/project/102/issue/2001/assignments", "action": "append", "model": "m={member}"},d
+													{"rel": [ "assign" ], "url": "/project/102/issue/2001/assignments", "action": "append", "model": "m={member}"},
 													{"name": "description", "value": "issue one"},
 													{"name": "priority", "value": "1"},
 													{"name": "status", "value": "OPEN"},
@@ -816,7 +816,6 @@ var (
 														[
 															{
 																{"rel": [ "remove" ], "url": "/project/102/issue/2001/assignment/1006", "action": "delete"},
-																{"rel": [ "member" ], "url": "/team/1006", "action": "read"},
 																{"name": "email", "value": "alice@members.com"}
 															}
 														]
@@ -838,7 +837,7 @@ var (
 												"url": "/project/102/contributor/1006",
 												"data":
 												[
-													{"rel": [ "unassign" ], "url": "/project/102/contributor/1006", "action": "delete"},
+													{"rel": [ "remove" ], "url": "/project/102/contributor/1006", "action": "delete"},
 													{"name": "email", "value": "alice@members.com"}
 												]
 											}

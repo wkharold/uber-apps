@@ -72,6 +72,9 @@ type issueTest struct {
 }
 
 var (
+	bogusissue = Issue{
+		id: 9999, name: "bogus", description: "bogus", priority: 0, status: Closed, project: 999, reporter: "bo@gus.org",
+	}
 	issueone = Issue{
 		id: 2001, name: "issueone", description: "issue one", priority: 1, status: Open, project: 101, reporter: "fred@testrock.org",
 	}
@@ -158,6 +161,13 @@ var (
 		{"Watching no watchers", issuefour.Watching, alltheissues, []Member{}, nil},
 		{"Watching one watcher", issuefive.Watching, alltheissues, []Member{alice}, nil},
 		{"Watching", issuethree.Watching, alltheissues, []Member{bob, carol, ted}, nil},
+	}
+	unassignIssueTests = []assignIssueTest{
+		{"Unassign non-existent issue", bogusissue, bob, alltheissues, []Member{}, ErrNoSuchIssue},
+		{"Unassign issue not assigned to member", issuethree, alice, alltheissues, []Member{}, nil},
+		{"Unassign issue no assignments", issuethree, alice, alltheissues, []Member{}, nil},
+		{"Unassign issue one assignment", issuetwo, bob, alltheissues, []Member{}, nil},
+		{"Unassign issue multiple assignments", issuesix, ted, alltheissues, []Member{carol, alice}, nil},
 	}
 )
 

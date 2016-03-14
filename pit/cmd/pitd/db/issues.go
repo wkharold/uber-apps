@@ -217,6 +217,17 @@ func (i Issue) Assigned(ctx context.Context) ([]Member, error) {
 	return collectMembers(ctx, rows)
 }
 
+// Unassign removes the specified project team member from the list of those assigned to the issue.
+func (i Issue) Unassign(ctx context.Context, m Member) {
+	db := databaseFromContext(ctx)
+
+	if _, err := tx.Exec("DELETE FROM assignment WHERE MID == $1 AND IID = $2", m.ID(), i.id); err != nil {
+		return err
+	}
+
+	return nil
+}
+
 // Watching retrieves a list of project team members who are watching the issue.
 func (i Issue) Watching(ctx context.Context) ([]Member, error) {
 	db := databaseFromContext(ctx)
